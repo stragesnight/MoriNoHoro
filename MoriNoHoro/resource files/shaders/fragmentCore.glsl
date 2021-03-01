@@ -7,5 +7,6 @@ out vec4 fs_color;
 
 void main()
 {
-	fs_color = vec4(vs_color, 1.f);
+	float alpha = 1.f / (abs(vs_position.z) / 4.f);
+	fs_color = vec4(vs_color, alpha);
 }

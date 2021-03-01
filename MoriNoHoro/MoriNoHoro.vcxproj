@@ -157,6 +157,7 @@
   <ItemGroup>
     <ClInclude Include="gameEngine.h" />
     <ClInclude Include="dependencies.h" />
+    <ClInclude Include="shader.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include="resource files\shaders\fragmentCore.glsl" />

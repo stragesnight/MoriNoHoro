@@ -32,6 +32,9 @@
     <ClInclude Include="dependencies.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="shader.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="resource files\shaders\fragmentCore.glsl">
