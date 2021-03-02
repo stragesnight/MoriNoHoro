@@ -43,7 +43,7 @@ namespace MoriNoHoro
 		static const int WINDOW_WIDTH = 1920;
 		static const int WINDOW_HEIGHT = 1080;
 		float ASPECT_RATIO;
-		static const int MAP_SIZE = 1500;
+		static const int MAP_SIZE = 3000;
 		static const unsigned NUM_VERTS = MAP_SIZE * MAP_SIZE;
 
 		const glm::vec3 CAMERA_UP { 0.0f, 1.0f, 0.0f };

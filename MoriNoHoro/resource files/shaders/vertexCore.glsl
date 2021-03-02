@@ -2,7 +2,7 @@
 
 layout (location = 0) in vec3 position;
 layout (location = 1) in vec3 color;
-layout (location = 2) in int index;
+layout (location = 2) in int array_index;
 
 out vec3 vs_position;
 out vec3 vs_color;
@@ -21,8 +21,11 @@ float oneOverInverseLerp(float a, float b, float v)
 
 void main()
 {
-	float _y = position.y + (sin(position.y - position.x + elapsedTime) / 8.f);
-	vec3 modifiedPos = vec3(position.x, _y, position.z);
+	float _x = position.x + ((sin(position.y + elapsedTime) * (array_index / (position.y + 1.f))) / 32.f);
+
+	float _z = position.z + ((cos( position.x + position.y + elapsedTime) * (array_index / (position.y + 1.f))) / 32.f);
+
+	vec3 modifiedPos = vec3(_x, position.y, _z);
 	vec4 pos = projection_matrix * view_matrix * model_matrix * vec4(modifiedPos, 1.f);
 
 	vs_position = modifiedPos;

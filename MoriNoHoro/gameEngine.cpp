@@ -87,7 +87,7 @@ namespace MoriNoHoro
 		//		GL_STREAM_DRAW: the data is set only once and used by the GPU at most a few times.
 		//		GL_STATIC_DRAW: the data is set only once and used many times.
 		//		GL_DYNAMIC_DRAW: the data is changed a lot and used many times.
-		glBufferData(GL_ARRAY_BUFFER, particles.size() * sizeof(particle), particles.data(), GL_STREAM_DRAW);
+		glBufferData(GL_ARRAY_BUFFER, _nSizeOfParticles, particles.data(), GL_DYNAMIC_DRAW);
 
 		// generate and bind ebo
 		//glGenBuffers(1, &_ebo);
@@ -98,7 +98,7 @@ namespace MoriNoHoro
 
 		_coreShader->setVertexAttribPointer("position", 3, GL_FLOAT, GL_FALSE, sizeof(particle), (GLvoid *)offsetof(particle, position));
 		_coreShader->setVertexAttribPointer("color", 3, GL_FLOAT, GL_FALSE, sizeof(particle), (GLvoid *)offsetof(particle, color));
-		_coreShader->setVertexAttribPointer("index", 1, GL_INT, GL_FALSE, sizeof(int), (GLvoid *)offsetof(particle, index));
+		_coreShader->setVertexAttribPointer("array_index", 1, GL_FLOAT, GL_FALSE, sizeof(particle), (GLvoid *)offsetof(particle, arrayIndex));
 
 		// unbind vertex array
 		glBindVertexArray(0);
@@ -171,25 +171,25 @@ namespace MoriNoHoro
 
 	void gameEngine::generateRandomParticles()
 	{
-		//for (int i = 0; i < NUM_VERTS; i++)
-		//{
-		//	//particles[i] = vertex(glm::vec3(rand() / 16383.f - 1.f, rand() / 16383.f - 1.f, 0), glm::vec3(rand() / 32767.f, rand() / 32000.f, rand() / 32000.f));
-		//	particles.emplace_back(glm::vec3(rand() / 16383.f-1.f, rand() / 16383.f-1.f, -rand() / 8192.f), glm::vec3(rand() / 32767.f, rand() / 32000.f, rand() / 32000.f), i);
-		//}
-
 		perlinNoise perlin(1);
 
 		std::vector<float> noiseMap = perlin.noiseMap(MAP_SIZE, 6, 256.f, 0.2f, 4.f, vMapOffset);
 		particles.clear();
-		particles.resize(MAP_SIZE * MAP_SIZE);
+		particles.reserve(MAP_SIZE * MAP_SIZE * 5);
 
 		for (int x = 0; x < MAP_SIZE; x++)
 		{
 			for (int y = 0; y < MAP_SIZE; y++)
 			{
-				glm::vec3 vPos { x / 100.0f, noiseMap[y * MAP_SIZE + x] * 2.f - 1.f, y / 100.0f };
-				glm::vec3 vCol { 0.1f, noiseMap[y * MAP_SIZE + x], 1.f - noiseMap[y * MAP_SIZE + x] };
-				particles.emplace_back(vPos, vCol, y * MAP_SIZE + x);
+				for (int i = 0; i < 16; i++)
+				{
+					if (rand() % 3 == 0)
+						break;
+
+					glm::vec3 vPos{ x / 64.0f, noiseMap[y * MAP_SIZE + x] * 2.f - 1.f + (i / 16.f + (rand() / 400000.f)), y / 64.0f };
+					glm::vec3 vCol{ i / 8.f, noiseMap[y * MAP_SIZE + x], 1.f - noiseMap[y * MAP_SIZE + x] };
+					particles.emplace_back(vPos, vCol, i);
+				}
 			}
 		}
 
@@ -239,7 +239,7 @@ namespace MoriNoHoro
 		glBindVertexArray(_vao);
 
 		// draw
-		glBufferData(GL_ARRAY_BUFFER, _nSizeOfParticles, particles.data(), GL_DYNAMIC_DRAW);
+		//glBufferData(GL_ARRAY_BUFFER, _nSizeOfParticles, particles.data(), GL_DYNAMIC_DRAW);
 		glDrawArrays(GL_POINTS, 0, particles.size());
 
 		// end drawing

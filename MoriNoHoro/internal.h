@@ -13,11 +13,11 @@ namespace MoriNoHoro
 	{
 		glm::vec3 position;
 		glm::vec3 color;
-		int index;
+		GLint arrayIndex;
 
 		particle() { }
 
-		particle(glm::vec3 pos, glm::vec3 col, int i) : position(pos), color(col) { index = i; }
+		particle(glm::vec3 pos, glm::vec3 col, int i) : position(pos), color(col) { arrayIndex = i; }
 	};
 
 #pragma endregion
