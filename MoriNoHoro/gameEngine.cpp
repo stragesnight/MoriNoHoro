@@ -29,12 +29,12 @@ namespace MoriNoHoro
 		_window = glfwCreateWindow(WINDOW_WIDTH, WINDOW_HEIGHT, "MoriNoHoro", NULL, NULL);
 
 		// get framebuffer and set viewport
-		glfwGetFramebufferSize(_window, &_framebufferWidth, &_framebufferHeight);
-		glViewport(0, 0, _framebufferWidth, _framebufferHeight);
+		glfwGetFramebufferSize(_window, &_nFramebufferWidth, &_nFramebufferHeight);
+		glViewport(0, 0, _nFramebufferWidth, _nFramebufferHeight);
 
 		glfwMakeContextCurrent(_window);
 
-		ASPECT_RATIO = (float)_framebufferWidth / (float)_framebufferHeight;
+		ASPECT_RATIO = (float)_nFramebufferWidth / (float)_nFramebufferHeight;
 
 		// enable additional glew functions
 		glewExperimental = GL_TRUE;
@@ -146,42 +146,59 @@ namespace MoriNoHoro
 	{
 		glm::mat4 identity(1.f);
 		// model matrix
-		_modelMatrix = glm::translate(identity, glm::vec3(0.0f, 0.0f, 0.0f));
-		_modelMatrix = glm::rotate(_modelMatrix, glm::radians(0.0f), glm::vec3(1.0f, 0.0f, 0.0f));
-		_modelMatrix = glm::rotate(_modelMatrix, glm::radians(0.0f), glm::vec3(0.0f, 1.0f, 0.0f));
-		_modelMatrix = glm::rotate(_modelMatrix, glm::radians(0.0f), glm::vec3(0.0f, 0.0f, 1.0f));
-		_modelMatrix = glm::scale(_modelMatrix, glm::vec3(1.f));
+		_mModelMatrix = glm::translate(identity, glm::vec3(0.0f, 0.0f, 0.0f));
+		_mModelMatrix = glm::rotate(_mModelMatrix, glm::radians(0.0f), glm::vec3(1.0f, 0.0f, 0.0f));
+		_mModelMatrix = glm::rotate(_mModelMatrix, glm::radians(0.0f), glm::vec3(0.0f, 1.0f, 0.0f));
+		_mModelMatrix = glm::rotate(_mModelMatrix, glm::radians(0.0f), glm::vec3(0.0f, 0.0f, 1.0f));
+		_mModelMatrix = glm::scale(_mModelMatrix, glm::vec3(1.f));
 
 		// view matrix
-		_viewMatrix = glm::lookAt(_vCameraPosition, _vCameraPosition + CAMERA_FRONT, CAMERA_UP);
+		_mViewMatrix = glm::lookAt(_vCameraPosition, _vCameraPosition + _vCameraFront, CAMERA_UP);
 
 		// projection matrix
-		_projectionMatrix = glm::perspective(glm::radians(FOV), ASPECT_RATIO, NEAR_PLANE, FAR_PLANE);
+		_mProjectionMatrix = glm::perspective(glm::radians(FOV), ASPECT_RATIO, NEAR_PLANE, FAR_PLANE);
 
 		// send data to gpu
 
 		_coreShader->use();
 
-		_coreShader->setUniformMatrix4fv("model_matrix", _modelMatrix);
-		_coreShader->setUniformMatrix4fv("view_matrix", _viewMatrix);
-		_coreShader->setUniformMatrix4fv("projection_matrix", _projectionMatrix);
+		_coreShader->setUniformMatrix4fv("model_matrix", _mModelMatrix);
+		_coreShader->setUniformMatrix4fv("view_matrix", _mViewMatrix);
+		_coreShader->setUniformMatrix4fv("projection_matrix", _mProjectionMatrix);
 
 		glUseProgram(0);
 	}
 
 	void gameEngine::generateRandomParticles()
 	{
-		for (int i = 0; i < NUM_VERTS; i++)
+		//for (int i = 0; i < NUM_VERTS; i++)
+		//{
+		//	//particles[i] = vertex(glm::vec3(rand() / 16383.f - 1.f, rand() / 16383.f - 1.f, 0), glm::vec3(rand() / 32767.f, rand() / 32000.f, rand() / 32000.f));
+		//	particles.emplace_back(glm::vec3(rand() / 16383.f-1.f, rand() / 16383.f-1.f, -rand() / 8192.f), glm::vec3(rand() / 32767.f, rand() / 32000.f, rand() / 32000.f), i);
+		//}
+
+		perlinNoise perlin(1);
+
+		std::vector<float> noiseMap = perlin.noiseMap(MAP_SIZE, 6, 256.f, 0.2f, 4.f, vMapOffset);
+		particles.clear();
+		particles.resize(MAP_SIZE * MAP_SIZE);
+
+		for (int x = 0; x < MAP_SIZE; x++)
 		{
-			//particles[i] = vertex(glm::vec3(rand() / 16383.f - 1.f, rand() / 16383.f - 1.f, 0), glm::vec3(rand() / 32767.f, rand() / 32000.f, rand() / 32000.f));
-			particles.emplace_back(glm::vec3(rand() / 16383.f-1.f, rand() / 16383.f-1.f, -rand() / 8192.f), glm::vec3(rand() / 32767.f, rand() / 32000.f, rand() / 32000.f), i);
+			for (int y = 0; y < MAP_SIZE; y++)
+			{
+				glm::vec3 vPos { x / 100.0f, noiseMap[y * MAP_SIZE + x] * 2.f - 1.f, y / 100.0f };
+				glm::vec3 vCol { 0.1f, noiseMap[y * MAP_SIZE + x], 1.f - noiseMap[y * MAP_SIZE + x] };
+				particles.emplace_back(vPos, vCol, y * MAP_SIZE + x);
+			}
 		}
 
-		sizeOfParticles = particles.size() * sizeof(particle);
+		_nSizeOfParticles = particles.size() * sizeof(particle);
 	}
 
 	void gameEngine::onUpdate(float fElapsedTime)
 	{
+		nFrame++;
 		std::cout << "\nFPS: " << 1. / fElapsedTime;
 
 		// update input
@@ -191,13 +208,13 @@ namespace MoriNoHoro
 
 		// update matrices
 
-		_modelMatrix = glm::translate(_modelMatrix, glm::vec3(0.0f, 0.0f, 0.0f));
-		_modelMatrix = glm::rotate(_modelMatrix, glm::radians(0.0f), glm::vec3(1.0f, 0.0f, 0.0f));
-		_modelMatrix = glm::rotate(_modelMatrix, glm::radians(0.0f), glm::vec3(0.0f, 1.0f, 0.0f));
-		_modelMatrix = glm::rotate(_modelMatrix, glm::radians(0.0f), glm::vec3(0.0f, 0.0f, 1.0f));
-		_modelMatrix = glm::scale(_modelMatrix, glm::vec3(1.f));
+		_mModelMatrix = glm::translate(_mModelMatrix, glm::vec3(0.0f, 0.0f, 0.0f));
+		_mModelMatrix = glm::rotate(_mModelMatrix, glm::radians(0.0f), glm::vec3(1.0f, 0.0f, 0.0f));
+		_mModelMatrix = glm::rotate(_mModelMatrix, glm::radians(0.0f), glm::vec3(0.0f, 1.0f, 0.0f));
+		_mModelMatrix = glm::rotate(_mModelMatrix, glm::radians(0.0f), glm::vec3(0.0f, 0.0f, 1.0f));
+		_mModelMatrix = glm::scale(_mModelMatrix, glm::vec3(1.f));
 
-		_viewMatrix = glm::lookAt(_vCameraPosition, _vCameraPosition + CAMERA_FRONT, CAMERA_UP);
+		_mViewMatrix = glm::lookAt(_vCameraPosition, _vCameraPosition + _vCameraFront, CAMERA_UP);
 
 		//for (int i = 0; i < 200000; i++)
 		//{
@@ -207,22 +224,22 @@ namespace MoriNoHoro
 		//}
 
 		// clear screen & buffers
-		glClearColor(0, 0, 0, 1);
+		glClearColor(0.6f, 0.6f, 0.89f, 0.1f);
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
 
 		// pre-draw setup
 		_coreShader->use();
 
 		// update uniforms
-		_coreShader->setUniformMatrix4fv("model_matrix", _modelMatrix);
-		_coreShader->setUniformMatrix4fv("view_matrix", _viewMatrix);
-		//_coreShader.setUniformMatrix4fv("projection_matrix", _projectionMatrix);
-		_coreShader->setUniformFloat("elapsedTime", _fTotalElapsedTime);
+		_coreShader->setUniformMatrix4fv("model_matrix", _mModelMatrix);
+		_coreShader->setUniformMatrix4fv("view_matrix", _mViewMatrix);
+		//_coreShader.setUniformMatrix4fv("projection_matrix", _mProjectionMatrix);
+		_coreShader->setUniform1f("elapsedTime", _fTotalElapsedTime);
 
 		glBindVertexArray(_vao);
 
 		// draw
-		glBufferData(GL_ARRAY_BUFFER, sizeOfParticles, particles.data(), GL_DYNAMIC_DRAW);
+		glBufferData(GL_ARRAY_BUFFER, _nSizeOfParticles, particles.data(), GL_DYNAMIC_DRAW);
 		glDrawArrays(GL_POINTS, 0, particles.size());
 
 		// end drawing
@@ -238,22 +255,81 @@ namespace MoriNoHoro
 			glfwSetWindowShouldClose(_window, GLFW_TRUE);
 
 		float fTempSpeed = SPEED;
+		bool move = glfwGetKey(_window, GLFW_KEY_LEFT_CONTROL) != GLFW_PRESS;
 
-		if (glfwGetKey(_window, GLFW_KEY_LEFT_SHIFT) == GLFW_PRESS)
-			fTempSpeed = SHIFT_SPEED;
+		if (move)
+		{
+			if (glfwGetKey(_window, GLFW_KEY_LEFT_SHIFT) == GLFW_PRESS)
+				fTempSpeed = SHIFT_SPEED;
 
-		if (glfwGetKey(_window, GLFW_KEY_W) == GLFW_PRESS)
-			_vCameraPosition.z -= fTempSpeed * fElapsedTime;
-		if (glfwGetKey(_window, GLFW_KEY_S) == GLFW_PRESS)
-			_vCameraPosition.z += fTempSpeed * fElapsedTime;
-		if (glfwGetKey(_window, GLFW_KEY_A) == GLFW_PRESS)
-			_vCameraPosition.x -= fTempSpeed * fElapsedTime;
-		if (glfwGetKey(_window, GLFW_KEY_D) == GLFW_PRESS)
-			_vCameraPosition.x += fTempSpeed * fElapsedTime;
-		if (glfwGetKey(_window, GLFW_KEY_Q) == GLFW_PRESS)
-			_vCameraPosition.y -= fTempSpeed * fElapsedTime;
-		if (glfwGetKey(_window, GLFW_KEY_E) == GLFW_PRESS)
-			_vCameraPosition.y += fTempSpeed * fElapsedTime;
+			if (glfwGetKey(_window, GLFW_KEY_W) == GLFW_PRESS)
+				_vCameraPosition += _vCameraFront * fTempSpeed * fElapsedTime;
+			if (glfwGetKey(_window, GLFW_KEY_S) == GLFW_PRESS)
+				_vCameraPosition -= _vCameraFront * fTempSpeed * fElapsedTime;
+			if (glfwGetKey(_window, GLFW_KEY_A) == GLFW_PRESS)
+				this->rotateVectorY(-fElapsedTime, &_vCameraFront);
+			if (glfwGetKey(_window, GLFW_KEY_D) == GLFW_PRESS)
+				this->rotateVectorY(fElapsedTime, &_vCameraFront);
+
+			if (glfwGetKey(_window, GLFW_KEY_Q) == GLFW_PRESS)
+				_vCameraPosition.y -= fTempSpeed * fElapsedTime;
+			if (glfwGetKey(_window, GLFW_KEY_E) == GLFW_PRESS)
+				_vCameraPosition.y += fTempSpeed * fElapsedTime;
+
+			if (glfwGetKey(_window, GLFW_KEY_LEFT) == GLFW_PRESS)
+			{
+				vMapOffset.x += fTempSpeed;
+				generateRandomParticles();
+			}
+
+			if (glfwGetKey(_window, GLFW_KEY_RIGHT) == GLFW_PRESS)
+			{
+				vMapOffset.x -= fTempSpeed;
+				generateRandomParticles();
+			}
+
+			if (glfwGetKey(_window, GLFW_KEY_UP) == GLFW_PRESS)
+			{
+				vMapOffset.y += fTempSpeed;
+				generateRandomParticles();
+			}
+
+			if (glfwGetKey(_window, GLFW_KEY_DOWN) == GLFW_PRESS)
+			{
+				vMapOffset.y -= fTempSpeed;
+				generateRandomParticles();
+			}
+		}
+		else
+		{
+			if (glfwGetKey(_window, GLFW_KEY_UP) == GLFW_PRESS)
+			{
+				this->rotateVectorX(-2.f * fElapsedTime, &_vCameraFront);
+			}
+
+			if (glfwGetKey(_window, GLFW_KEY_DOWN) == GLFW_PRESS)
+			{
+				this->rotateVectorX(2.f * fElapsedTime, &_vCameraFront);
+			}
+		}
+	}
+
+	void gameEngine::rotateVectorY(float degrees, glm::vec3 *vec)
+	{
+		float newX = cosf(degrees) * vec->x - sinf(degrees) * vec->z;
+		float newZ = sinf(degrees) * vec->x + cosf(degrees) * vec->z;
+
+		vec->x = newX;
+		vec->z = newZ;
+	}
+
+	void gameEngine::rotateVectorX(float degrees, glm::vec3 *vec)
+	{
+		float newY = cosf(degrees) * vec->y - sinf(degrees) * vec->z;
+		float newZ = sinf(degrees) * vec->y + cosf(degrees) * vec->z;
+
+		vec->y = newY;
+		vec->z = newZ;
 	}
 
 #pragma endregion

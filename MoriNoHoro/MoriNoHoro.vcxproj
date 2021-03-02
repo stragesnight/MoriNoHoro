@@ -153,10 +153,11 @@
   <ItemGroup>
     <ClCompile Include="gameEngine.cpp" />
     <ClCompile Include="main.cpp" />
+    <ClCompile Include="noise.h" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="gameEngine.h" />
-    <ClInclude Include="dependencies.h" />
+    <ClInclude Include="internal.h" />
     <ClInclude Include="shader.h" />
   </ItemGroup>
   <ItemGroup>

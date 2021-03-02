@@ -12,14 +12,14 @@ class shader
 #pragma region CONSTRUCTORS
 public:
 	shader() { }
-	shader(const char *vertexFilename, const char *fragmentFilename)
+	shader(const char *cVertexFilename, const char *cFragmentFilename)
 	{
 		// init shaders to 0
 		GLuint vertex = 0;
 		GLuint fragment = 0;
 
-		vertex = loadShader(GL_VERTEX_SHADER, vertexFilename);
-		fragment = loadShader(GL_FRAGMENT_SHADER, fragmentFilename);
+		vertex = loadShader(GL_VERTEX_SHADER, cVertexFilename);
+		fragment = loadShader(GL_FRAGMENT_SHADER, cFragmentFilename);
 
 		this->linkProgram(vertex, fragment);
 	}
@@ -39,85 +39,92 @@ public:
 	void use() { glUseProgram(_programID); }
 	void unuse() { glUseProgram(0); }
 
-	void setUniformMatrix4fv(const GLchar *name, glm::mat4 value)
+	void setUniformMatrix4fv(const GLchar *cName, glm::mat4 mValue)
 	{
-		GLuint uniformLoc = glGetUniformLocation(this->_programID, name);
-		glUniformMatrix4fv(uniformLoc, 1, GL_FALSE, glm::value_ptr(value));
-		std::cout << "\nuniform loc " << uniformLoc;
+		GLuint uniformLoc = glGetUniformLocation(this->_programID, cName);
+		glUniformMatrix4fv(uniformLoc, 1, GL_FALSE, glm::value_ptr(mValue));
+		//std::cout << "\nuniform loc " << uniformLoc;
 	}
 
-	void setUniformFloat(const GLchar *name, GLfloat value)
+	void setUniform1f(const GLchar *cName, GLfloat fValue)
 	{
-		GLuint uniformLoc = glGetUniformLocation(this->_programID, name);
-		glUniform1f(uniformLoc, value);
-		std::cout << "\nuniform loc " << uniformLoc;
+		GLuint uniformLoc = glGetUniformLocation(this->_programID, cName);
+		glUniform1f(uniformLoc, fValue);
+		//std::cout << "\nuniform loc " << uniformLoc;
 	}
 
-	void setVertexAttribPointer(const GLchar *name, GLint count, GLenum type, GLboolean _b, GLsizei size, GLvoid *offset)
+	void setUniform1i(const GLchar *cName, GLint nValue)
 	{
-		GLuint attribLoc = glGetAttribLocation(this->_programID, name);
-		glVertexAttribPointer(attribLoc, count, type, _b, size, offset);
+		GLuint uniformLoc = glGetUniformLocation(this->_programID, cName);
+		glUniform1i(uniformLoc, nValue);
+		//std::cout << "\nuniform loc " << uniformLoc;
+	}
+
+	void setVertexAttribPointer(const GLchar *cName, GLint nCount, GLenum eType, GLboolean _b, GLsizei size, GLvoid *offset)
+	{
+		GLuint attribLoc = glGetAttribLocation(this->_programID, cName);
+		glVertexAttribPointer(attribLoc, nCount, eType, _b, size, offset);
 		glEnableVertexAttribArray(attribLoc);
-		std::cout << "\nattrib loc " << attribLoc;
+		//std::cout << "\nattrib loc " << attribLoc;
 	}
 
-	void setVertexAttribPointer(GLint location, GLint count, GLenum type, GLboolean _b, GLsizei size, GLvoid *offset)
+	void setVertexAttribPointer(GLint nLocation, GLint nCount, GLenum eType, GLboolean _b, GLsizei size, GLvoid *offset)
 	{
-		glVertexAttribPointer(location, count, type, _b, size, offset);
-		glEnableVertexAttribArray(location);
-		std::cout << "\nattrib loc " << location;
+		glVertexAttribPointer(nLocation, nCount, eType, _b, size, offset);
+		glEnableVertexAttribArray(nLocation);
+		//std::cout << "\nattrib loc " << nLocation;
 	}
 
 #pragma endregion
 
 #pragma region PRIVATE_METHODS
 private:
-	std::string loadShaderSource(const char *filename)
+	std::string loadShaderSource(const char *cFilename)
 	{
 		// line holder
-		std::string temp = "";
+		std::string sTemp = "";
 		// file holder
-		std::string src = "";
+		std::string sSrc = "";
 		std::ifstream file;
 
-		file.open(filename);
+		file.open(cFilename);
 
 		// if shader file was successfully open
 		if (file.is_open())
 		{
 			// add each line of file to src
-			while (std::getline(file, temp))
-				src += temp + "\n";
+			while (std::getline(file, sTemp))
+				sSrc += sTemp + "\n";
 		}
 		else
-			std::cout << "error at shader::loadShaderSource -> shader file \"" << filename << "\" could not be open.\n";
+			std::cout << "error at shader::loadShaderSource -> shader file \"" << cFilename << "\" could not be open.\n";
 
 		file.close();
 
-		return src;
+		return sSrc;
 	}
 
-	GLuint loadShader(GLenum type, const char *filename)
+	GLuint loadShader(GLenum eType, const char *cFilename)
 	{
 		// log for shader loading succession
-		char infoLog[512];
+		char cInfoLog[512];
 		GLint success;
 
 		// create shader
-		GLuint shader = glCreateShader(type);
+		GLuint shader = glCreateShader(eType);
 		// load shader source file into shader and compile
-		std::string strSrc = this->loadShaderSource(filename);
-		const GLchar *src = strSrc.c_str();
-		glShaderSource(shader, 1, &src, NULL);
+		std::string sSrc = this->loadShaderSource(cFilename);
+		const GLchar *cSrc = sSrc.c_str();
+		glShaderSource(shader, 1, &cSrc, NULL);
 		glCompileShader(shader);
 
 		// check for compilation error
 		glGetShaderiv(shader, GL_COMPILE_STATUS, &success);
 		if (!success)
 		{
-			glGetShaderInfoLog(shader, 512, NULL, infoLog);
-			std::cout << "error at shader::loadShader -> error compiling shader \"" << filename << "\".\n";
-			std::cout << infoLog << std::endl;
+			glGetShaderInfoLog(shader, 512, NULL, cInfoLog);
+			std::cout << "error at shader::loadShader -> error compiling shader \"" << cFilename << "\".\n";
+			std::cout << cInfoLog << std::endl;
 		}
 
 		return shader;
@@ -126,7 +133,7 @@ private:
 	void linkProgram(GLuint vertex, GLuint fragment)
 	{
 		// log for shader loading succession
-		char infoLog[512];
+		char cInfoLog[512];
 		GLint success;
 
 		this->_programID = glCreateProgram();
@@ -142,9 +149,9 @@ private:
 		glGetProgramiv(this->_programID, GL_LINK_STATUS, &success);
 		if (!success)
 		{
-			glGetProgramInfoLog(this->_programID, 512, NULL, infoLog);
+			glGetProgramInfoLog(this->_programID, 512, NULL, cInfoLog);
 			std::cout << "error at shader::linkProgram -> error linking program.\n";
-			std::cout << infoLog << std::endl;
+			std::cout << cInfoLog << std::endl;
 		}
 
 		// end linking

@@ -1,7 +1,21 @@
 #pragma once
 
-#include "dependencies.h"
+#include <iostream>
+#include <fstream>
+#include <string>
+#include <vector>
+
+#include <glew.h>
+#include <glfw3.h>
+
+#include <glm.hpp>
+#include <gtc/matrix_transform.hpp>
+#include <gtc/type_ptr.hpp>
+
 #include <chrono>
+
+#include "internal.h"
+
 
 namespace MoriNoHoro
 {
@@ -26,33 +40,32 @@ namespace MoriNoHoro
 	private:
 		// constants
 
-		static const int WINDOW_WIDTH = 1280;
-		static const int WINDOW_HEIGHT = 720;
+		static const int WINDOW_WIDTH = 1920;
+		static const int WINDOW_HEIGHT = 1080;
 		float ASPECT_RATIO;
-		static const unsigned NUM_VERTS = 1000000;
+		static const int MAP_SIZE = 1500;
+		static const unsigned NUM_VERTS = MAP_SIZE * MAP_SIZE;
 
 		const glm::vec3 CAMERA_UP { 0.0f, 1.0f, 0.0f };
-		const glm::vec3 CAMERA_FRONT { 0.0f, 0.0f, -1.0f };
 		const float SPEED = 0.8f;
 		const float SHIFT_SPEED = 2.5f;
 
-		const float FOV = 90.0f;
+		const float FOV = 70.0f;
 		const float NEAR_PLANE = 0.1f;
 		const float FAR_PLANE = 10000.0f;
-
-		const glm::mat4 *IDENTITY = new glm::mat4(1.f);
 
 		// window
 
 		GLFWwindow *_window;
 
-		int _framebufferWidth = 0;
-		int _framebufferHeight = 0;
+		int _nFramebufferWidth = 0;
+		int _nFramebufferHeight = 0;
 
 		// time
 
 		std::chrono::steady_clock::time_point _tTotalTime;
 		float _fTotalElapsedTime = 0.f;
+		int nFrame = 0;
 
 		// openGL buffers 
 
@@ -61,13 +74,14 @@ namespace MoriNoHoro
 
 		// matrices
 
-		glm::mat4 _modelMatrix;
-		glm::mat4 _viewMatrix;
-		glm::mat4 _projectionMatrix;
+		glm::mat4 _mModelMatrix;
+		glm::mat4 _mViewMatrix;
+		glm::mat4 _mProjectionMatrix;
 
 		// camera
 
 		glm::vec3 _vCameraPosition { 0.0f, 0.0f, 10.0f };
+		glm::vec3 _vCameraFront{ 0.0f, 0.0f, -1.0f };
 
 		// shader
 
@@ -76,7 +90,8 @@ namespace MoriNoHoro
 		// graphics
 
 		std::vector<particle> particles;
-		unsigned sizeOfParticles;
+		glm::vec2 vMapOffset { 0.0f, 0.0f };
+		unsigned _nSizeOfParticles;
 
 #pragma endregion
 
@@ -97,6 +112,8 @@ namespace MoriNoHoro
 		void onUpdate(float fElapsedTime);
 		void handleInputs(float fElapsedTime);
 		void generateRandomParticles();
+		void rotateVectorY(float degrees, glm::vec3 *vec);
+		void rotateVectorX(float degrees, glm::vec3 *vec);
 
 #pragma endregion
 	};

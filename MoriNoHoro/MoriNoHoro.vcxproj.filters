@@ -24,15 +24,18 @@
     <ClCompile Include="gameEngine.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="noise.h">
+      <Filter>Header Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="gameEngine.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="dependencies.h">
+    <ClInclude Include="shader.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="shader.h">
+    <ClInclude Include="internal.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
