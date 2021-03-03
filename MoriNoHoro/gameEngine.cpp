@@ -68,8 +68,6 @@ namespace MoriNoHoro
 		//shader core("resource files/shaders/vertexCore.glsl", "resource files/shaders/fragmentCore.glsl");
 		_coreShader = new shader("resource files/shaders/vertexCore.glsl", "resource files/shaders/fragmentCore.glsl");
 
-		this->generateRandomParticles();
-
 		this->generateMatrices();
 
 		// vao, vbo
@@ -78,16 +76,8 @@ namespace MoriNoHoro
 		glCreateVertexArrays(1, &_vao);
 		glBindVertexArray(_vao);
 
-		// gereate and bind vbo
-		glCreateBuffers(1, &_vbo);
-		glBindBuffer(GL_ARRAY_BUFFER, _vbo);
-
-		// send data to buffer
-		// draw modes:
-		//		GL_STREAM_DRAW: the data is set only once and used by the GPU at most a few times.
-		//		GL_STATIC_DRAW: the data is set only once and used many times.
-		//		GL_DYNAMIC_DRAW: the data is changed a lot and used many times.
-		glBufferData(GL_ARRAY_BUFFER, _nSizeOfParticles, particles.data(), GL_DYNAMIC_DRAW);
+		map = terrain(1);
+		map.construct(MAP_SIZE, vMapOffset);
 
 		// generate and bind ebo
 		//glGenBuffers(1, &_ebo);
@@ -169,33 +159,6 @@ namespace MoriNoHoro
 		glUseProgram(0);
 	}
 
-	void gameEngine::generateRandomParticles()
-	{
-		perlinNoise perlin(1);
-
-		std::vector<float> noiseMap = perlin.noiseMap(MAP_SIZE, 6, 256.f, 0.2f, 4.f, vMapOffset);
-		particles.clear();
-		particles.reserve(MAP_SIZE * MAP_SIZE * 5);
-
-		for (int x = 0; x < MAP_SIZE; x++)
-		{
-			for (int y = 0; y < MAP_SIZE; y++)
-			{
-				for (int i = 0; i < 16; i++)
-				{
-					if (rand() % 3 == 0)
-						break;
-
-					glm::vec3 vPos{ x / 64.0f, noiseMap[y * MAP_SIZE + x] * 2.f - 1.f + (i / 16.f + (rand() / 400000.f)), y / 64.0f };
-					glm::vec3 vCol{ i / 8.f, noiseMap[y * MAP_SIZE + x], 1.f - noiseMap[y * MAP_SIZE + x] };
-					particles.emplace_back(vPos, vCol, i);
-				}
-			}
-		}
-
-		_nSizeOfParticles = particles.size() * sizeof(particle);
-	}
-
 	void gameEngine::onUpdate(float fElapsedTime)
 	{
 		nFrame++;
@@ -238,9 +201,7 @@ namespace MoriNoHoro
 
 		glBindVertexArray(_vao);
 
-		// draw
-		//glBufferData(GL_ARRAY_BUFFER, _nSizeOfParticles, particles.data(), GL_DYNAMIC_DRAW);
-		glDrawArrays(GL_POINTS, 0, particles.size());
+		map.draw();
 
 		// end drawing
 		glfwSwapBuffers(_window);
@@ -276,29 +237,29 @@ namespace MoriNoHoro
 			if (glfwGetKey(_window, GLFW_KEY_E) == GLFW_PRESS)
 				_vCameraPosition.y += fTempSpeed * fElapsedTime;
 
-			if (glfwGetKey(_window, GLFW_KEY_LEFT) == GLFW_PRESS)
-			{
-				vMapOffset.x += fTempSpeed;
-				generateRandomParticles();
-			}
+		//	if (glfwGetKey(_window, GLFW_KEY_LEFT) == GLFW_PRESS)
+		//	{
+		//		vMapOffset.x += fTempSpeed;
+		//		generateRandomParticles();
+		//	}
 
-			if (glfwGetKey(_window, GLFW_KEY_RIGHT) == GLFW_PRESS)
-			{
-				vMapOffset.x -= fTempSpeed;
-				generateRandomParticles();
-			}
+		//	if (glfwGetKey(_window, GLFW_KEY_RIGHT) == GLFW_PRESS)
+		//	{
+		//		vMapOffset.x -= fTempSpeed;
+		//		generateRandomParticles();
+		//	}
 
-			if (glfwGetKey(_window, GLFW_KEY_UP) == GLFW_PRESS)
-			{
-				vMapOffset.y += fTempSpeed;
-				generateRandomParticles();
-			}
+		//	if (glfwGetKey(_window, GLFW_KEY_UP) == GLFW_PRESS)
+		//	{
+		//		vMapOffset.y += fTempSpeed;
+		//		generateRandomParticles();
+		//	}
 
-			if (glfwGetKey(_window, GLFW_KEY_DOWN) == GLFW_PRESS)
-			{
-				vMapOffset.y -= fTempSpeed;
-				generateRandomParticles();
-			}
+		//	if (glfwGetKey(_window, GLFW_KEY_DOWN) == GLFW_PRESS)
+		//	{
+		//		vMapOffset.y -= fTempSpeed;
+		//		generateRandomParticles();
+		//	}
 		}
 		else
 		{

@@ -70,7 +70,6 @@ namespace MoriNoHoro
 		// openGL buffers 
 
 		GLuint _vao;
-		GLuint _vbo;
 
 		// matrices
 
@@ -89,9 +88,8 @@ namespace MoriNoHoro
 		
 		// graphics
 
-		std::vector<particle> particles;
+		terrain map;
 		glm::vec2 vMapOffset { 0.0f, 0.0f };
-		unsigned _nSizeOfParticles;
 
 #pragma endregion
 
@@ -111,7 +109,6 @@ namespace MoriNoHoro
 		// called once per frame to update game state
 		void onUpdate(float fElapsedTime);
 		void handleInputs(float fElapsedTime);
-		void generateRandomParticles();
 		void rotateVectorY(float degrees, glm::vec3 *vec);
 		void rotateVectorX(float degrees, glm::vec3 *vec);
 
