@@ -1,12 +1,10 @@
 #version 440
 
-layout (location = 0) in vec3 position;
-layout (location = 1) in vec3 color;
-layout (location = 2) in int array_index;
+layout (location = 0) in vec4 position;
+layout (location = 1) in vec4 color;
 
-out vec3 vs_position;
-out vec3 vs_color;
-out float vs_depth;
+out vec4 vs_position;
+out vec4 vs_color;
 
 uniform mat4 model_matrix;
 uniform mat4 view_matrix;
@@ -21,16 +19,14 @@ float oneOverInverseLerp(float a, float b, float v)
 
 void main()
 {
-	float _x = position.x + ((sin(position.y + elapsedTime) * (array_index / (position.y + 1.f))) / 32.f);
+	float _x = position.x + ((sin(position.y + elapsedTime) * (position.w / (position.y + 1.f))) / 32.f);
+	float _z = position.z + ((cos( position.x + position.y + elapsedTime) * (position.w / (position.y + 1.f))) / 32.f);
 
-	float _z = position.z + ((cos( position.x + position.y + elapsedTime) * (array_index / (position.y + 1.f))) / 32.f);
-
-	vec3 modifiedPos = vec3(_x, position.y, _z);
-	vec4 pos = projection_matrix * view_matrix * model_matrix * vec4(modifiedPos, 1.f);
+	vec4 modifiedPos = vec4(_x, position.y, _z, position.w);
+	vec4 pos = projection_matrix * view_matrix * model_matrix * vec4(modifiedPos.xyz, 1.f);
 
 	vs_position = modifiedPos;
 	vs_color = color;
-	vs_depth = oneOverInverseLerp(-0.2f, 10.f, pos.z);
 
 	gl_Position = pos;
 	gl_PointSize = oneOverInverseLerp(-0.2f, 15.f, pos.z);

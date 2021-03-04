@@ -11,13 +11,12 @@ namespace MoriNoHoro
 	// describes a point in a 3D world
 	struct particle
 	{
-		glm::vec3 position;
-		glm::vec3 color;
-		int arrayIndex;
+		glm::vec4 position;
+		glm::vec4 color;
 
 		particle() { }
-
-		particle(glm::vec3 pos, glm::vec3 col, int i) : position(pos), color(col) { arrayIndex = i; }
+		particle(glm::vec3 pos, glm::vec4 col, int i) : position({pos.x, pos.y, pos.z, (float)i}), color(col) { }
+		particle(glm::vec4 pos, glm::vec4 col) : position(pos), color(col) { }
 	};
 
 	class terrain

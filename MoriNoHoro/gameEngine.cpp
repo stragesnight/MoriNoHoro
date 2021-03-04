@@ -18,59 +18,13 @@ namespace MoriNoHoro
 
 	bool gameEngine::init()
 	{
-		glfwInit();
-
-		// configure opengl window
-		glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
-		glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4);
-		glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 4);
-		glfwWindowHint(GLFW_RESIZABLE, GL_FALSE);
-
-		_window = glfwCreateWindow(WINDOW_WIDTH, WINDOW_HEIGHT, "MoriNoHoro", NULL, NULL);
-
-		// get framebuffer and set viewport
-		glfwGetFramebufferSize(_window, &_nFramebufferWidth, &_nFramebufferHeight);
-		glViewport(0, 0, _nFramebufferWidth, _nFramebufferHeight);
-
-		glfwMakeContextCurrent(_window);
-
-		ASPECT_RATIO = (float)_nFramebufferWidth / (float)_nFramebufferHeight;
-
-		// enable additional glew functions
-		glewExperimental = GL_TRUE;
-
-		// check for GLEW error
-		if (glewInit() != GLEW_OK)
-		{
-			std::cout << "error at GameEngine::Init -> failed GLEW initialization.\n";
-			glfwTerminate();
-			return false;
-		}
-
-
-		// opengl configuration
-
-		glEnable(GL_DEPTH_TEST);
-		// backface culling
-		glEnable(GL_CULL_FACE);
-		glCullFace(GL_BACK);
-		glFrontFace(GL_CCW);
-		// polygon mode (GL_FILL, GL_LINE, GL_POINT)
-		glPolygonMode(GL_FRONT_AND_BACK, GL_POINT);
-		glPointSize(10.0f);
-		// color blending
-		glEnable(GL_BLEND);
-		glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-		// enables per-vertex point size
-		glEnable(GL_VERTEX_PROGRAM_POINT_SIZE);
+		initGLFW();
+		configureGL();
 
 		// load shaders
-		//shader core("resource files/shaders/vertexCore.glsl", "resource files/shaders/fragmentCore.glsl");
-		_coreShader = new shader("resource files/shaders/vertexCore.glsl", "resource files/shaders/fragmentCore.glsl");
+		_terrainShader = new shader("resource files/shaders/vertexCore.glsl", "resource files/shaders/fragmentCore.glsl");
 
-		this->generateMatrices();
-
-		// vao, vbo
+		generateMatrices();
 
 		// generate and bind vao
 		glCreateVertexArrays(1, &_vao);
@@ -79,16 +33,10 @@ namespace MoriNoHoro
 		map = terrain(1);
 		map.construct(MAP_SIZE, vMapOffset);
 
-		// generate and bind ebo
-		//glGenBuffers(1, &_ebo);
-		//glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, _ebo);
-		//glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), indices, GL_STATIC_DRAW);
-
 		// set vertexAttribPointers (input assembly)
 
-		_coreShader->setVertexAttribPointer("position", 3, GL_FLOAT, GL_FALSE, sizeof(particle), (GLvoid *)offsetof(particle, position));
-		_coreShader->setVertexAttribPointer("color", 3, GL_FLOAT, GL_FALSE, sizeof(particle), (GLvoid *)offsetof(particle, color));
-		_coreShader->setVertexAttribPointer("array_index", 1, GL_FLOAT, GL_FALSE, sizeof(particle), (GLvoid *)offsetof(particle, arrayIndex));
+		_terrainShader->setVertexAttribPointer("position", 4, GL_FLOAT, GL_FALSE, sizeof(particle), (GLvoid *)offsetof(particle, position));
+		_terrainShader->setVertexAttribPointer("color", 4, GL_FLOAT, GL_FALSE, sizeof(particle), (GLvoid *)offsetof(particle, color));
 
 		// unbind vertex array
 		glBindVertexArray(0);
@@ -123,7 +71,7 @@ namespace MoriNoHoro
 		}
 
 		// end program
-		delete _coreShader;
+		delete _terrainShader;
 		glfwTerminate();
 		return;
 	}
@@ -131,6 +79,47 @@ namespace MoriNoHoro
 #pragma endregion
 
 #pragma region PRIVATE_METHODS
+
+	void gameEngine::initGLFW()
+	{
+		glfwInit();
+
+		// configure opengl window
+		glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
+		glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4);
+		glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 4);
+		glfwWindowHint(GLFW_RESIZABLE, GL_FALSE);
+
+		_window = glfwCreateWindow(WINDOW_WIDTH, WINDOW_HEIGHT, "MoriNoHoro", NULL, NULL);
+
+		// get framebuffer and set viewport
+		glfwGetFramebufferSize(_window, &_nFramebufferWidth, &_nFramebufferHeight);
+		glViewport(0, 0, _nFramebufferWidth, _nFramebufferHeight);
+
+		glfwMakeContextCurrent(_window);
+
+		ASPECT_RATIO = (float)_nFramebufferWidth / (float)_nFramebufferHeight;
+
+		// enable additional glew functions
+		glewExperimental = GL_TRUE;
+
+		// check for GLEW error
+		if (glewInit() != GLEW_OK)
+		{
+			std::cout << "error at GameEngine::Init -> failed GLEW initialization.\n";
+			glfwTerminate();
+		}
+	}
+
+	void gameEngine::configureGL()
+	{
+		glEnable(GL_DEPTH_TEST);
+		// polygon mode (GL_FILL, GL_LINE, GL_POINT)
+		glPolygonMode(GL_FRONT_AND_BACK, GL_POINT);
+		// enables per-vertex point size
+		glEnable(GL_VERTEX_PROGRAM_POINT_SIZE);
+
+	}
 
 	void gameEngine::generateMatrices()
 	{
@@ -150,11 +139,11 @@ namespace MoriNoHoro
 
 		// send data to gpu
 
-		_coreShader->use();
+		_terrainShader->use();
 
-		_coreShader->setUniformMatrix4fv("model_matrix", _mModelMatrix);
-		_coreShader->setUniformMatrix4fv("view_matrix", _mViewMatrix);
-		_coreShader->setUniformMatrix4fv("projection_matrix", _mProjectionMatrix);
+		_terrainShader->setUniformMatrix4fv("model_matrix", _mModelMatrix);
+		_terrainShader->setUniformMatrix4fv("view_matrix", _mViewMatrix);
+		_terrainShader->setUniformMatrix4fv("projection_matrix", _mProjectionMatrix);
 
 		glUseProgram(0);
 	}
@@ -179,25 +168,18 @@ namespace MoriNoHoro
 
 		_mViewMatrix = glm::lookAt(_vCameraPosition, _vCameraPosition + _vCameraFront, CAMERA_UP);
 
-		//for (int i = 0; i < 200000; i++)
-		//{
-		//	particles[i].position.x += (sinf(_fTotalElapsedTime + particles[i].position.y) + cosf(_fTotalElapsedTime - particles[i].position.y)) / ((i + 1.f) / 500.f);
-		//	particles[i].position.y += (cosf(_fTotalElapsedTime - particles[i].position.x) - sinf(particles[i].position.x - _fTotalElapsedTime)) / ((i + 1.f) / 500.f);
-		//	//particles[i].position.z += sinf(_fTotalElapsedTime + particles[i].position.z);
-		//}
-
 		// clear screen & buffers
 		glClearColor(0.6f, 0.6f, 0.89f, 0.1f);
-		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
+		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
 		// pre-draw setup
-		_coreShader->use();
+		_terrainShader->use();
 
 		// update uniforms
-		_coreShader->setUniformMatrix4fv("model_matrix", _mModelMatrix);
-		_coreShader->setUniformMatrix4fv("view_matrix", _mViewMatrix);
-		//_coreShader.setUniformMatrix4fv("projection_matrix", _mProjectionMatrix);
-		_coreShader->setUniform1f("elapsedTime", _fTotalElapsedTime);
+		_terrainShader->setUniformMatrix4fv("model_matrix", _mModelMatrix);
+		_terrainShader->setUniformMatrix4fv("view_matrix", _mViewMatrix);
+		//_terrainShader.setUniformMatrix4fv("projection_matrix", _mProjectionMatrix);
+		_terrainShader->setUniform1f("elapsedTime", _fTotalElapsedTime);
 
 		glBindVertexArray(_vao);
 

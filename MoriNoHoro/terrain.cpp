@@ -32,9 +32,9 @@ namespace MoriNoHoro
 					if (rand() % 3 == 0)
 						break;
 
-					glm::vec3 vPos{ x / 64.0f, noiseMap[y * nMapSize + x] * 4.f - 1.f + (i / 16.f + (rand() / 400000.f)), y / 64.0f };
-					glm::vec3 vCol{ i / 8.f, noiseMap[y * nMapSize + x], 1.f - noiseMap[y * nMapSize + x] };
-					_vParticles.emplace_back(vPos, vCol, i);
+					glm::vec4 vPos{ x / 64.0f, noiseMap[y * nMapSize + x] * 4.f - 1.f + (i / 16.f + (rand() / 400000.f)), y / 64.0f, i };
+					glm::vec4 vCol{ i / 8.f, noiseMap[y * nMapSize + x], 1.f - noiseMap[y * nMapSize + x], rand() / 80000.f + 0.69f };
+					_vParticles.emplace_back(vPos, vCol);
 				}
 			}
 		}

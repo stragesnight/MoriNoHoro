@@ -84,7 +84,7 @@ namespace MoriNoHoro
 
 		// shader
 
-		shader *_coreShader;
+		shader *_terrainShader;
 		
 		// graphics
 
@@ -104,6 +104,8 @@ namespace MoriNoHoro
 
 #pragma region PRIVATE_METHODS
 	private:
+		void initGLFW();
+		void configureGL();
 		// generate required glm::mat4 matrices
 		void generateMatrices();
 		// called once per frame to update game state
