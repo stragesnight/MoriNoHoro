@@ -82,7 +82,7 @@ public:
 		return (res + 1.0) / 2.0;
 	}
 
-	std::vector<float> noiseMap(std::uint32_t mapSize, std::uint32_t nOctaves, float sampleScale, float persistance, float lacunarity, glm::vec2 vOffset)
+	std::vector<float> noiseMap2D(std::uint32_t mapSize, std::uint32_t nOctaves, float sampleScale, float persistance, float lacunarity, glm::vec2 vOffset)
 	{
 		std::vector<float> vOutput;
 		vOutput.resize(mapSize * mapSize);
@@ -113,6 +113,66 @@ public:
 		}
 
 		return vOutput;
+	}
+
+	std::vector<float> noiseMap3D(glm::vec3 vMapSize, std::uint32_t nOctaves, float sampleScale, float persistance, float lacunarity, glm::vec3 vOffset)
+	{
+		std::vector<float> vOutput;
+		//vOutput.reserve(vMapSize.x * vMapSize.y * vMapSize.z);
+
+		for (int x = 0; x < vMapSize.x; x++)
+		{
+			for (int y = 0; y < vMapSize.y; y++)
+			{
+				for (int z = 0; z < vMapSize.z; z++)
+				{
+					float noiseValue = 0;
+					float amplitude = 1;
+					float frequency = 1;
+					float scaleFactor = 0;
+
+					for (int o = 0; o < nOctaves; o++)
+					{
+						float sampleX = (x + vOffset.x) * frequency / sampleScale;
+						float sampleY = (y + vOffset.y) * frequency / sampleScale;
+						float sampleZ = (z + vOffset.z) * frequency / sampleScale;
+
+						noiseValue += noise(sampleX, sampleY, sampleZ) * amplitude;
+
+						scaleFactor += amplitude;
+						amplitude *= persistance;
+						frequency *= lacunarity;
+					}
+
+					vOutput.push_back(noiseValue / scaleFactor);
+				}
+			}
+		}
+
+		return vOutput;
+	}
+
+	float noiseOctave(float x, float y, float z, int nOctaves, float sampleScale, float persistance, float lacunarity)
+	{
+		float noiseValue = 0;
+		float amplitude = 1;
+		float frequency = 1;
+		float scaleFactor = 0;
+
+		for (int o = 0; o < nOctaves; o++)
+		{
+			float sampleX = x * frequency / sampleScale;
+			float sampleY = y * frequency / sampleScale;
+			float sampleZ = z * frequency / sampleScale;
+
+			noiseValue += noise(sampleX, sampleY, sampleZ) * amplitude;
+
+			scaleFactor += amplitude;
+			amplitude *= persistance;
+			frequency *= lacunarity;
+		}
+
+		return noiseValue;
 	}
 
 private:

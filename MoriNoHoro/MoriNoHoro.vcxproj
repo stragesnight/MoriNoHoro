@@ -158,7 +158,6 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="gameEngine.h" />
-    <ClInclude Include="internal.h" />
     <ClInclude Include="terrain.h" />
     <ClInclude Include="shader.h" />
   </ItemGroup>

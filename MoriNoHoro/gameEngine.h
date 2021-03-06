@@ -1,8 +1,6 @@
 #pragma once
 
 #include <iostream>
-#include <fstream>
-#include <string>
 #include <vector>
 
 #include <glew.h>
@@ -10,11 +8,10 @@
 
 #include <glm.hpp>
 #include <gtc/matrix_transform.hpp>
-#include <gtc/type_ptr.hpp>
 
 #include <chrono>
 
-#include "internal.h"
+#include "terrain.h"
 
 
 namespace MoriNoHoro
@@ -43,8 +40,8 @@ namespace MoriNoHoro
 		static const int WINDOW_WIDTH = 1920;
 		static const int WINDOW_HEIGHT = 1080;
 		float ASPECT_RATIO;
-		static const int MAP_SIZE = 3000;
-		static const unsigned NUM_VERTS = MAP_SIZE * MAP_SIZE;
+		static const int CHUNK_SIZE = 128;
+		static const int NUM_CHUNKS = 1;
 
 		const glm::vec3 CAMERA_UP { 0.0f, 1.0f, 0.0f };
 		const float SPEED = 0.8f;
@@ -65,7 +62,6 @@ namespace MoriNoHoro
 
 		std::chrono::steady_clock::time_point _tTotalTime;
 		float _fTotalElapsedTime = 0.f;
-		int nFrame = 0;
 
 		// openGL buffers 
 
@@ -79,17 +75,14 @@ namespace MoriNoHoro
 
 		// camera
 
-		glm::vec3 _vCameraPosition { 0.0f, 0.0f, 10.0f };
-		glm::vec3 _vCameraFront{ 0.0f, 0.0f, -1.0f };
-
-		// shader
-
-		shader *_terrainShader;
+		//glm::vec3 _vCameraPosition { 21.94f, 3.17f, 29.0f };
+		glm::vec3 _vCameraPosition { 0.f, 0.f, 0.f };
+		glm::vec3 _vCameraFront{ 0.f, 0.f, 1.f };
 		
 		// graphics
 
-		terrain map;
-		glm::vec2 vMapOffset { 0.0f, 0.0f };
+		terrain *map;
+		glm::vec3 vMapOffset { 0.f, 0.f, 0.f };
 
 #pragma endregion
 

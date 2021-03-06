@@ -21,8 +21,7 @@ namespace MoriNoHoro
 		initGLFW();
 		configureGL();
 
-		// load shaders
-		_terrainShader = new shader("resource files/shaders/vertexCore.glsl", "resource files/shaders/fragmentCore.glsl");
+		map = new terrain(4);
 
 		generateMatrices();
 
@@ -30,13 +29,7 @@ namespace MoriNoHoro
 		glCreateVertexArrays(1, &_vao);
 		glBindVertexArray(_vao);
 
-		map = terrain(1);
-		map.construct(MAP_SIZE, vMapOffset);
-
-		// set vertexAttribPointers (input assembly)
-
-		_terrainShader->setVertexAttribPointer("position", 4, GL_FLOAT, GL_FALSE, sizeof(particle), (GLvoid *)offsetof(particle, position));
-		_terrainShader->setVertexAttribPointer("color", 4, GL_FLOAT, GL_FALSE, sizeof(particle), (GLvoid *)offsetof(particle, color));
+		map->construct(CHUNK_SIZE, NUM_CHUNKS, vMapOffset);
 
 		// unbind vertex array
 		glBindVertexArray(0);
@@ -71,7 +64,7 @@ namespace MoriNoHoro
 		}
 
 		// end program
-		delete _terrainShader;
+		delete map;
 		glfwTerminate();
 		return;
 	}
@@ -114,6 +107,8 @@ namespace MoriNoHoro
 	void gameEngine::configureGL()
 	{
 		glEnable(GL_DEPTH_TEST);
+		//glEnable(GL_BLEND);
+		//glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 		// polygon mode (GL_FILL, GL_LINE, GL_POINT)
 		glPolygonMode(GL_FRONT_AND_BACK, GL_POINT);
 		// enables per-vertex point size
@@ -139,24 +134,21 @@ namespace MoriNoHoro
 
 		// send data to gpu
 
-		_terrainShader->use();
-
-		_terrainShader->setUniformMatrix4fv("model_matrix", _mModelMatrix);
-		_terrainShader->setUniformMatrix4fv("view_matrix", _mViewMatrix);
-		_terrainShader->setUniformMatrix4fv("projection_matrix", _mProjectionMatrix);
+		map->setUniforms(&_fTotalElapsedTime, &_mModelMatrix, &_mViewMatrix, &_mProjectionMatrix);
 
 		glUseProgram(0);
 	}
 
 	void gameEngine::onUpdate(float fElapsedTime)
 	{
-		nFrame++;
 		std::cout << "\nFPS: " << 1. / fElapsedTime;
+		//std::cout << "\nSIZE OF PARTICLE " << sizeof(particle) << "\n\n";
+		//std::cout << "\nCAMERA LOC { X = " << _vCameraPosition.x << "\tY = " << _vCameraPosition.y << "\tZ = " << _vCameraPosition.z << " }\n";
 
 		// update input
 		glfwPollEvents();
 
-		this->handleInputs(fElapsedTime);
+		handleInputs(fElapsedTime);
 
 		// update matrices
 
@@ -173,17 +165,15 @@ namespace MoriNoHoro
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
 		// pre-draw setup
-		_terrainShader->use();
-
-		// update uniforms
-		_terrainShader->setUniformMatrix4fv("model_matrix", _mModelMatrix);
-		_terrainShader->setUniformMatrix4fv("view_matrix", _mViewMatrix);
-		//_terrainShader.setUniformMatrix4fv("projection_matrix", _mProjectionMatrix);
-		_terrainShader->setUniform1f("elapsedTime", _fTotalElapsedTime);
+		map->setUniforms(&_fTotalElapsedTime, &_mModelMatrix, &_mViewMatrix);
 
 		glBindVertexArray(_vao);
 
-		map.draw();
+		//if ((int)(_fTotalElapsedTime * 10.f) % 32 == 0)
+		//	map->advance(1, CHUNK_SIZE);
+
+		// draw
+		map->draw();
 
 		// end drawing
 		glfwSwapBuffers(_window);
@@ -218,6 +208,10 @@ namespace MoriNoHoro
 				_vCameraPosition.y -= fTempSpeed * fElapsedTime;
 			if (glfwGetKey(_window, GLFW_KEY_E) == GLFW_PRESS)
 				_vCameraPosition.y += fTempSpeed * fElapsedTime;
+
+			if (glfwGetKey(_window, GLFW_KEY_SPACE) == GLFW_PRESS)
+				map->advance(1, CHUNK_SIZE);
+
 
 		//	if (glfwGetKey(_window, GLFW_KEY_LEFT) == GLFW_PRESS)
 		//	{

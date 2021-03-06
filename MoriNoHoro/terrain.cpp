@@ -6,10 +6,12 @@ namespace MoriNoHoro
 	terrain::terrain(int nSeed) 
 	{ 
 		perlin = perlinNoise(nSeed);
+		_coreShader = new shader("resource files/shaders/vertexCore.glsl", "resource files/shaders/fragmentCore.glsl");
 	}
 	terrain::~terrain()
 	{
 		_vParticles.clear();
+		delete _coreShader;
 	}
 
 #pragma endregion
@@ -17,24 +19,174 @@ namespace MoriNoHoro
 #pragma endregion
 
 #pragma region PUBLIC_METHODS
-	void terrain::construct(int nMapSize, glm::vec2 vMapOffset)
+	void terrain::construct(int nChunkSize, int nChunks, glm::vec3 vMapOffset)
 	{
-		std::vector<float> noiseMap = perlin.noiseMap(nMapSize, 6, 1024.f, 0.4f, 4.f, vMapOffset);
 		_vParticles.clear();
-		_vParticles.reserve(nMapSize * nMapSize * 5);
+		_vParticleStates.clear();
+		//_vParticles.reserve(nChunkSize * nChunkSize * 5);
 
-		for (int x = 0; x < nMapSize; x++)
+		glm::vec3 vMapSize{ nChunkSize, nChunkSize, nChunkSize };
+
+		std::vector<float> noiseMap3D;
+
+		for (int chunkX = 0; chunkX < nChunks; chunkX++)
 		{
-			for (int y = 0; y < nMapSize; y++)
+			for (int chunkZ = 0; chunkZ < nChunks; chunkZ++)
 			{
-				for (int i = 0; i < 16; i++)
-				{
-					if (rand() % 3 == 0)
-						break;
+				noiseMap3D = perlin.noiseMap3D(vMapSize, 5, 512.f, 0.25f, 4.f, { chunkZ * vMapSize.x, 0.f, chunkX * vMapSize.z });
 
-					glm::vec4 vPos{ x / 64.0f, noiseMap[y * nMapSize + x] * 4.f - 1.f + (i / 16.f + (rand() / 400000.f)), y / 64.0f, i };
-					glm::vec4 vCol{ i / 8.f, noiseMap[y * nMapSize + x], 1.f - noiseMap[y * nMapSize + x], rand() / 80000.f + 0.69f };
-					_vParticles.emplace_back(vPos, vCol);
+				for (int z = 0; z < vMapSize.z; z++)
+				{
+					for (int y = 0; y < vMapSize.y; y++)
+					{
+						for (int x = 0; x < vMapSize.x; x++)
+						{
+							int index = (z * vMapSize.y * vMapSize.x) + (y * vMapSize.x) + x;
+							float noiseValue = noiseMap3D[index];
+							//noiseValue = (vMapSize.y / (float)y) * 0.01f + (noiseValue * 0.99f);
+							//noiseValue = rand() % 2;
+
+							//glm::vec4 pos{ (x + (chunkX * vMapSize.x) + (rand() / 32768.f)) / 8.f, (y + (rand() / 32768.f)) / 8.f, (z + (chunkZ * vMapSize.z) + (rand() / 32768.f)) / 8.f, rand() % 2 };
+							glm::vec4 pos{ (x + (chunkX * vMapSize.x)) / 16.f, (y + (rand() / 32768.f)) / 16.f, (z + (chunkZ * vMapSize.z)) / 16.f, noiseValue };
+							glm::vec4 color{ (x + (chunkX * vMapSize.x)) / ((float)vMapSize.x * nChunks), y / vMapSize.y, (z + (chunkZ * vMapSize.z)) / ((float)vMapSize.z * nChunks), noiseValue > 0.475f ? 1 : 0 };
+
+							_vParticles.emplace_back(pos, color, index);
+							_vParticleStates.push_back(color.a);
+						}
+					}
+				}
+
+				noiseMap3D.clear();
+			}
+		}
+
+		_nSizeOfParticles = _vParticles.size() * sizeof(particle);
+		nParticles = _vParticles.size();
+		
+		// create vbo
+		glCreateBuffers(1, &_vbo);
+		glBindBuffer(GL_ARRAY_BUFFER, _vbo);
+
+		// input assembly
+		_coreShader->setVertexAttribPointer("position", 4, GL_FLOAT, GL_FALSE, sizeof(particle), (GLvoid *)offsetof(particle, position));
+		_coreShader->setVertexAttribPointer("color", 4, GL_FLOAT, GL_FALSE, sizeof(particle), (GLvoid *)offsetof(particle, color));
+
+		bufferData();
+	}
+
+	void terrain::advance(int nEpochs, int nChunkSize)
+	{
+		for (int z = 0; z < nChunkSize; z++)
+		{
+			for (int y = 0; y < nChunkSize; y++)
+			{
+				for (int x = 0; x < nChunkSize; x++)
+				{
+					int nNeighbors = 0;
+
+					int index = (z * nChunkSize * nChunkSize) + (y * nChunkSize) + x;
+
+					int f = index + 1;
+					int b = index - 1;
+					int u = index + nChunkSize;
+					int d = index - nChunkSize;
+					int l = index + (nChunkSize * nChunkSize);
+					int r = index - (nChunkSize * nChunkSize);
+
+					// max neighbors - 32
+
+					// front
+					if (f < _vParticles.size() - 1)
+						if (_vParticles[f].color.a > 0.5f)
+							nNeighbors++;
+					// back
+					if (b >= 0)
+						if (_vParticles[b].color.a > 0.5f)
+							nNeighbors++;
+					// left
+					if (l < _vParticles.size() - 1)
+						if (_vParticles[l].color.a > 0.5f)
+							nNeighbors++;
+					// right
+					if (r >= 0)
+						if (_vParticles[r].color.a > 0.5f)
+							nNeighbors++;
+					// up
+					if (u < _vParticles.size() - 1)
+						if (_vParticles[u].color.a > 0.5f)
+							nNeighbors++;
+					// down
+					if (d >= 0)
+						if (_vParticles[d].color.a > 0.5f)
+							nNeighbors++;
+
+					int fl = f + l - index;
+					int fr = f + r - index;
+					int bl = b + l - index;
+					int br = b + r - index;
+					int ul = u + l - index;
+					int ur = u + r - index;
+					int dl = d + l - index;
+					int dr = d + r - index;
+
+					// front left
+					if (fl >= 0 && fl < _vParticles.size() - 1)
+						if (_vParticles[fl].color.a > 0.5f)
+							nNeighbors++;
+					// front right
+					if (fr >= 0 && fr < _vParticles.size() - 1)
+						if (_vParticles[fr].color.a > 0.5f)
+							nNeighbors++;
+					// back left
+					if (bl >= 0 && bl < _vParticles.size() - 1)
+						if (_vParticles[bl].color.a > 0.5f)
+							nNeighbors++;
+					// back right
+					if (br >= 0 && br < _vParticles.size() - 1)
+						if (_vParticles[br].color.a > 0.5f)
+							nNeighbors++;
+					// up left
+					if (ul >= 0 && ul < _vParticles.size() - 1)
+						if (_vParticles[ul].color.a > 0.5f)
+							nNeighbors++;
+					// up right
+					if (ur >= 0 && ur < _vParticles.size() - 1)
+						if (_vParticles[ur].color.a > 0.5f)
+							nNeighbors++;
+					// down left
+					if (dl >= 0 && dl < _vParticles.size() - 1)
+						if (_vParticles[dl].color.a > 0.5f)
+							nNeighbors++;
+					// down right
+					if (dr >= 0 && dr < _vParticles.size() - 1)
+						if (_vParticles[dr].color.a > 0.5f)
+							nNeighbors++;
+
+					int flu = fl + u - index;
+					int fld = fl + d - index;
+					int fru = fr + u - index;
+					int frd = fr + d - index;
+					int blu = bl + u - index;
+					int bld = bl + d - index;
+					int bru = br + u - index;
+					int brd = br + d - index;
+
+					if (_vParticleStates[index] > 0.5f)
+						_vParticleStates[index] = nNeighbors == 4;
+					else
+						_vParticleStates[index] = nNeighbors == 2 && rand() % 32 < 15;
+				}
+			}
+		}
+
+		for (int z = 0; z < nChunkSize; z++)
+		{
+			for (int y = 0; y < nChunkSize; y++)
+			{
+				for (int x = 0; x < nChunkSize; x++)
+				{
+					int index = (z * nChunkSize * nChunkSize) + (y * nChunkSize) + x;
+					_vParticles[index].color.a = _vParticleStates[index];
 				}
 			}
 		}
@@ -42,7 +194,7 @@ namespace MoriNoHoro
 		_nSizeOfParticles = _vParticles.size() * sizeof(particle);
 		nParticles = _vParticles.size();
 
-		bufferData(true);
+		bufferData();
 	}
 
 	void terrain::draw()
@@ -50,29 +202,39 @@ namespace MoriNoHoro
 		glDrawArrays(GL_POINTS, 0, nParticles);
 	}
 
-#pragma endregion
-
-#pragma region PRIVATE_METHODS
-	void terrain::bufferData(bool bGenVbo = false)
+	void terrain::setUniforms(float *fTotalElapsedTime, glm::mat4 *mModel, glm::mat4 *mView, glm::mat4 *mProjection)
 	{
-		if (bGenVbo)
-		{
-			// gereate and bind vbo
-			glCreateBuffers(1, &_vbo);
-			glBindBuffer(GL_ARRAY_BUFFER, _vbo);
-		}
+		_coreShader->use();
 
+		_coreShader->setUniform1f("elapsedTime", *fTotalElapsedTime);
+		if (mModel != nullptr)
+			_coreShader->setUniformMatrix4fv("model_matrix", *mModel);
+		if (mView != nullptr)
+			_coreShader->setUniformMatrix4fv("view_matrix", *mView);
+		if (mProjection != nullptr)
+			_coreShader->setUniformMatrix4fv("projection_matrix", *mProjection);
+	}
+
+	void terrain::bufferData()
+	{
 		// send data to buffer
 		// draw modes:
 		//		GL_STREAM_DRAW: the data is set only once and used by the GPU at most a few times.
 		//		GL_STATIC_DRAW: the data is set only once and used many times.
 		//		GL_DYNAMIC_DRAW: the data is changed a lot and used many times.
 		glBufferData(GL_ARRAY_BUFFER, _nSizeOfParticles, _vParticles.data(), GL_DYNAMIC_DRAW);
+		//_vParticles.clear();
+		std::cout << "\nBUFFERED " << _vParticles.size() << " PARTICLES\n";
 	}
+
+#pragma endregion
+
+#pragma region PRIVATE_METHODS
 
 	void terrain::bufferSubData()
 	{
-
+		glBufferSubData(GL_ARRAY_BUFFER, 0, _nSizeOfParticles, _vParticles.data());
+		std::cout << "\nSUB-BUFFERED " << _vParticles.size() << " PARTICLES\n";
 	}
 
 #pragma endregion

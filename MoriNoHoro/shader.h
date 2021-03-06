@@ -31,6 +31,7 @@ public:
 #pragma region PRIVATE_VARIABLES
 private:
 	GLuint _programID;
+	const bool coutLocations = false;
 
 #pragma endregion
 
@@ -43,21 +44,24 @@ public:
 	{
 		GLuint uniformLoc = glGetUniformLocation(this->_programID, cName);
 		glUniformMatrix4fv(uniformLoc, 1, GL_FALSE, glm::value_ptr(mValue));
-		//std::cout << "\nuniform loc " << uniformLoc;
+		if (coutLocations)
+			std::cout << "\nuniform loc " << uniformLoc;
 	}
 
 	void setUniform1f(const GLchar *cName, GLfloat fValue)
 	{
 		GLuint uniformLoc = glGetUniformLocation(this->_programID, cName);
 		glUniform1f(uniformLoc, fValue);
-		//std::cout << "\nuniform loc " << uniformLoc;
+		if (coutLocations)
+			std::cout << "\nuniform loc " << uniformLoc;
 	}
 
 	void setUniform1i(const GLchar *cName, GLint nValue)
 	{
 		GLuint uniformLoc = glGetUniformLocation(this->_programID, cName);
 		glUniform1i(uniformLoc, nValue);
-		//std::cout << "\nuniform loc " << uniformLoc;
+		if (coutLocations)
+			std::cout << "\nuniform loc " << uniformLoc;
 	}
 
 	void setVertexAttribPointer(const GLchar *cName, GLint nCount, GLenum eType, GLboolean _b, GLsizei size, GLvoid *offset)
@@ -65,14 +69,16 @@ public:
 		GLuint attribLoc = glGetAttribLocation(this->_programID, cName);
 		glVertexAttribPointer(attribLoc, nCount, eType, _b, size, offset);
 		glEnableVertexAttribArray(attribLoc);
-		//std::cout << "\nattrib loc " << attribLoc;
+		if (coutLocations)
+			std::cout << "\nattrib loc " << attribLoc;
 	}
 
 	void setVertexAttribPointer(GLint nLocation, GLint nCount, GLenum eType, GLboolean _b, GLsizei size, GLvoid *offset)
 	{
 		glVertexAttribPointer(nLocation, nCount, eType, _b, size, offset);
 		glEnableVertexAttribArray(nLocation);
-		//std::cout << "\nattrib loc " << nLocation;
+		if (coutLocations)
+			std::cout << "\nattrib loc " << nLocation;
 	}
 
 #pragma endregion
