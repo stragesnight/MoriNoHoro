@@ -134,7 +134,7 @@ namespace MoriNoHoro
 
 		// send data to gpu
 
-		map->setUniforms(&_fTotalElapsedTime, &_mModelMatrix, &_mViewMatrix, &_mProjectionMatrix);
+		map->setUniforms(&_fTotalElapsedTime, &_mModelMatrix, &_mViewMatrix, &_mProjectionMatrix, &CHUNK_SIZE);
 
 		glUseProgram(0);
 	}
@@ -169,11 +169,8 @@ namespace MoriNoHoro
 
 		glBindVertexArray(_vao);
 
-		//if ((int)(_fTotalElapsedTime * 10.f) % 32 == 0)
-		//	map->advance(1, CHUNK_SIZE);
-
 		// draw
-		map->draw();
+		map->draw(_bShouldAdvance);
 
 		// end drawing
 		glfwSwapBuffers(_window);
@@ -209,8 +206,7 @@ namespace MoriNoHoro
 			if (glfwGetKey(_window, GLFW_KEY_E) == GLFW_PRESS)
 				_vCameraPosition.y += fTempSpeed * fElapsedTime;
 
-			if (glfwGetKey(_window, GLFW_KEY_SPACE) == GLFW_PRESS)
-				map->advance(1, CHUNK_SIZE);
+			_bShouldAdvance = glfwGetKey(_window, GLFW_KEY_SPACE) == GLFW_PRESS;
 
 
 		//	if (glfwGetKey(_window, GLFW_KEY_LEFT) == GLFW_PRESS)

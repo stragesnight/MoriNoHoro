@@ -40,7 +40,7 @@ namespace MoriNoHoro
 		static const int WINDOW_WIDTH = 1920;
 		static const int WINDOW_HEIGHT = 1080;
 		float ASPECT_RATIO;
-		static const int CHUNK_SIZE = 128;
+		int CHUNK_SIZE = 256;
 		static const int NUM_CHUNKS = 1;
 
 		const glm::vec3 CAMERA_UP { 0.0f, 1.0f, 0.0f };
@@ -76,13 +76,16 @@ namespace MoriNoHoro
 		// camera
 
 		//glm::vec3 _vCameraPosition { 21.94f, 3.17f, 29.0f };
-		glm::vec3 _vCameraPosition { 0.f, 0.f, 0.f };
+		glm::vec3 _vCameraPosition { 10.f, 5.f, 0.f };
 		glm::vec3 _vCameraFront{ 0.f, 0.f, 1.f };
 		
 		// graphics
 
 		terrain *map;
 		glm::vec3 vMapOffset { 0.f, 0.f, 0.f };
+
+		bool _bShouldAdvance = false;
+		float timer = 1.f;
 
 #pragma endregion
 

@@ -12,6 +12,7 @@ class shader
 #pragma region CONSTRUCTORS
 public:
 	shader() { }
+
 	shader(const char *cVertexFilename, const char *cFragmentFilename)
 	{
 		// init shaders to 0
@@ -21,7 +22,27 @@ public:
 		vertex = loadShader(GL_VERTEX_SHADER, cVertexFilename);
 		fragment = loadShader(GL_FRAGMENT_SHADER, cFragmentFilename);
 
-		this->linkProgram(vertex, fragment);
+		this->linkProgram(vertex, fragment, 0);
+	}
+
+	shader(const char *cComputeFilename)
+	{
+		GLuint compute = loadShader(GL_COMPUTE_SHADER, cComputeFilename);
+		this->linkProgram(0, 0, compute);
+	}
+
+	shader(const char *cVertexFilename, const char *cFragmentFilename, const char *cComputeFilename)
+	{
+		// init shaders to 0
+		GLuint vertex = 0;
+		GLuint fragment = 0;
+		GLuint compute = 0;
+
+		vertex = loadShader(GL_VERTEX_SHADER, cVertexFilename);
+		fragment = loadShader(GL_FRAGMENT_SHADER, cFragmentFilename);
+		compute = loadShader(GL_COMPUTE_SHADER, cComputeFilename);
+
+		this->linkProgram(vertex, fragment, compute);
 	}
 
 	~shader() { glDeleteProgram(this->_programID); }
@@ -37,8 +58,14 @@ private:
 
 #pragma region PUBLIC_METHODS
 public:
-	void use() { glUseProgram(_programID); }
-	void unuse() { glUseProgram(0); }
+	void use() 
+	{ 
+		glUseProgram(_programID);
+	}
+	void unuse() 
+	{ 
+		glUseProgram(0);
+	}
 
 	void setUniformMatrix4fv(const GLchar *cName, glm::mat4 mValue)
 	{
@@ -136,7 +163,7 @@ private:
 		return shader;
 	}
 
-	void linkProgram(GLuint vertex, GLuint fragment)
+	void linkProgram(GLuint vertex, GLuint fragment, GLuint compute)
 	{
 		// log for shader loading succession
 		char cInfoLog[512];
@@ -144,10 +171,12 @@ private:
 
 		this->_programID = glCreateProgram();
 
-		if (vertex)
+		if (vertex != 0)
 			glAttachShader(this->_programID, vertex);
-		if (fragment)
+		if (fragment != 0)
 			glAttachShader(this->_programID, fragment);
+		if (compute != 0)
+			glAttachShader(this->_programID, compute);
 
 		glLinkProgram(this->_programID);
 
@@ -161,10 +190,13 @@ private:
 		}
 
 		// end linking
-		if (vertex)
+		if (vertex != 0)
 			glDeleteShader(vertex);
-		if (fragment)
+		if (fragment != 0)
 			glDeleteShader(fragment);
+		if (compute != 0)
+			glDeleteShader(compute);
+
 		glUseProgram(0);
 	}
 

@@ -49,5 +49,8 @@
     <None Include="resource files\shaders\vertexCore.glsl">
       <Filter>Resource Files\shaders</Filter>
     </None>
+    <None Include="resource files\shaders\cellularAutomataEpoch.glsl">
+      <Filter>Resource Files\shaders</Filter>
+    </None>
   </ItemGroup>
 </Project>
