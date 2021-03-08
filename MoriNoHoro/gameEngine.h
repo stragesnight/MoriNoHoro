@@ -40,12 +40,13 @@ namespace MoriNoHoro
 		static const int WINDOW_WIDTH = 1920;
 		static const int WINDOW_HEIGHT = 1080;
 		float ASPECT_RATIO;
-		int CHUNK_SIZE = 256;
+		// seems like 256x256x256 / 512x64x512 are optimal sizes, bigger numbers will overflow buffer
+		glm::vec3 MAP_SIZE = { 256, 256, 256 };
 		static const int NUM_CHUNKS = 1;
 
 		const glm::vec3 CAMERA_UP { 0.0f, 1.0f, 0.0f };
-		const float SPEED = 0.8f;
-		const float SHIFT_SPEED = 2.5f;
+		const float SPEED = 2.5f;
+		const float SHIFT_SPEED = 7.75f;
 
 		const float FOV = 70.0f;
 		const float NEAR_PLANE = 0.1f;
@@ -76,7 +77,7 @@ namespace MoriNoHoro
 		// camera
 
 		//glm::vec3 _vCameraPosition { 21.94f, 3.17f, 29.0f };
-		glm::vec3 _vCameraPosition { 10.f, 5.f, 0.f };
+		glm::vec3 _vCameraPosition { 15.f, 12.f, -15.f };
 		glm::vec3 _vCameraFront{ 0.f, 0.f, 1.f };
 		
 		// graphics
@@ -92,7 +93,7 @@ namespace MoriNoHoro
 #pragma region PUBLIC_METHODS
 	public:
 		// initialize GameEngie
-		bool init();
+		bool init(int seed);
 		// start update loop
 		void run();
 

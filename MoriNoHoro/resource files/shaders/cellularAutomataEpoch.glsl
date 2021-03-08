@@ -12,7 +12,7 @@ layout (std430, binding = 1) buffer particleStateProxy
 	uint proxy[];
 };
 
-uniform int mapSize;
+uniform vec3 mapSize;
 
 bool fEquals(uint v1, uint v2)
 {
@@ -23,15 +23,15 @@ void main()
 {
 	uint nNeighbors = 0;
 	
-	uint index = ((gl_GlobalInvocationID.z + 0) * mapSize * mapSize) + ((gl_GlobalInvocationID.y + 0) * mapSize) + gl_GlobalInvocationID.x + 0;
-	int nParticleArraySize = mapSize * mapSize * mapSize;
+	uint index = uint((gl_GlobalInvocationID.y * mapSize.x * mapSize.z) + (gl_GlobalInvocationID.z* mapSize.x) + gl_GlobalInvocationID.x);
+	uint nParticleArraySize = uint(mapSize.x * mapSize.y * mapSize.z);
 	
 	uint f = index + 1;
 	uint b = index - 1;
-	uint u = index + mapSize;
-	uint d = index - mapSize;
-	uint l = index + (mapSize * mapSize);
-	uint r = index - (mapSize * mapSize);
+	uint u = uint(index + mapSize.x);
+	uint d = uint(index - mapSize.x);
+	uint l = uint(index + (mapSize.x * mapSize.z));
+	uint r = uint(index - (mapSize.x * mapSize.z));
 	
 	// front
 	if (f < nParticleArraySize - 1)
@@ -101,7 +101,7 @@ void main()
 			nNeighbors++;
 	
 	if (state[index] >= 0.5f)
-		state[index] = (fEquals(nNeighbors, 3) || fEquals(nNeighbors, 2) || fEquals(nNeighbors, 7)) ? 1 : 0;
+		state[index] = (fEquals(nNeighbors, 4) || fEquals(nNeighbors, 5)) ? 1 : 0;
 	else
-		state[index] = (fEquals(nNeighbors, 5) || fEquals(nNeighbors, 4) || fEquals(nNeighbors, 8)) ? 1 : 0;
+		state[index] = (fEquals(nNeighbors, 3)) ? 1 : 0;
 }

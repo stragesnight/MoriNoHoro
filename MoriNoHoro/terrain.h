@@ -45,15 +45,15 @@ namespace MoriNoHoro
 
 #pragma region PUBLIC_METHODS
 	public:
-		void construct(int nChunkSize, int nChunks, glm::vec3 vMapOffset);
-		void draw(bool advance);
+		void construct(glm::vec3 vMapSize, glm::vec3 vMapOffset);
+		void draw(bool advance, glm::vec3 vMapSize);
 		void setUniforms
 		(
 			float *fTotalElapsedTime,
 			glm::mat4 *mModel = nullptr,
 			glm::mat4 *mView = nullptr,
 			glm::mat4 *mProjection = nullptr,
-			int *nMapSize = 0
+			glm::vec3 *vMapSize = nullptr
 		);
 
 #pragma endregion

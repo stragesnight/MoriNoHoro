@@ -16,12 +16,12 @@ namespace MoriNoHoro
 
 #pragma region PUBLIC_METHODS
 
-	bool gameEngine::init()
+	bool gameEngine::init(int seed)
 	{
 		initGLFW();
 		configureGL();
 
-		map = new terrain(4);
+		map = new terrain(seed);
 
 		generateMatrices();
 
@@ -29,7 +29,7 @@ namespace MoriNoHoro
 		glCreateVertexArrays(1, &_vao);
 		glBindVertexArray(_vao);
 
-		map->construct(CHUNK_SIZE, NUM_CHUNKS, vMapOffset);
+		map->construct(MAP_SIZE, vMapOffset);
 
 		// unbind vertex array
 		glBindVertexArray(0);
@@ -134,7 +134,7 @@ namespace MoriNoHoro
 
 		// send data to gpu
 
-		map->setUniforms(&_fTotalElapsedTime, &_mModelMatrix, &_mViewMatrix, &_mProjectionMatrix, &CHUNK_SIZE);
+		map->setUniforms(&_fTotalElapsedTime, &_mModelMatrix, &_mViewMatrix, &_mProjectionMatrix, &MAP_SIZE);
 
 		glUseProgram(0);
 	}
@@ -170,7 +170,7 @@ namespace MoriNoHoro
 		glBindVertexArray(_vao);
 
 		// draw
-		map->draw(_bShouldAdvance);
+		map->draw(_bShouldAdvance, MAP_SIZE);
 
 		// end drawing
 		glfwSwapBuffers(_window);

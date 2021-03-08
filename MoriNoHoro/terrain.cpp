@@ -24,26 +24,25 @@ namespace MoriNoHoro
 #pragma endregion
 
 #pragma region PUBLIC_METHODS
-	void terrain::construct(int nChunkSize, int nChunks, glm::vec3 vMapOffset)
+	void terrain::construct(glm::vec3 vMapSize, glm::vec3 vMapOffset)
 	{
 		_vParticleStates.clear();
 		_vParticleStatesProxy.clear();
-
-		glm::vec3 vMapSize{ nChunkSize, nChunkSize, nChunkSize };
 
 		std::vector<float> noiseMap3D;
 
 		noiseMap3D = perlin.noiseMap3D(vMapSize, 5, 512.f, 0.25f, 4.f, { 0.f, 0.f, 0.f });
 
-		for (int z = 0; z < vMapSize.z; z++)
+		for (int y = 0; y < vMapSize.y; y++)
 		{
-			for (int y = 0; y < vMapSize.y; y++)
+			for (int z = 0; z < vMapSize.z; z++)
 			{
 				for (int x = 0; x < vMapSize.x; x++)
 				{
-					int index = (z * vMapSize.y * vMapSize.x) + (y * vMapSize.x) + x;
+					int index = (y * vMapSize.x * vMapSize.z) + (z * vMapSize.x) + x;
+
 					float noiseValue = noiseMap3D[index];
-					//noiseValue = (vMapSize.y / (float)y) * 0.15f + (noiseValue * 0.85f);
+					noiseValue = (1 - (y / (float)vMapSize.y)) * 0.25f + (noiseValue * 0.75f);
 
 					unsigned state = noiseValue > 0.475f ? 1 : 0;
 
@@ -66,14 +65,18 @@ namespace MoriNoHoro
 
 		glBufferData(GL_ARRAY_BUFFER, _nSizeOfParticles, _vParticleStates.data(), GL_DYNAMIC_COPY);
 
+		_vParticleStates.clear();
+
 		// proxy buffer
 		glCreateBuffers(1, &_particleStateProxyBuffer);
 		glBindBuffer(GL_COPY_WRITE_BUFFER, _particleStateProxyBuffer);
 
 		glBufferData(GL_COPY_WRITE_BUFFER, _nSizeOfParticles, _vParticleStatesProxy.data(), GL_DYNAMIC_COPY);
+
+		_vParticleStatesProxy.clear();
 	}
 
-	void terrain::draw(bool advance)
+	void terrain::draw(bool advance, glm::vec3 vMapSize)
 	{
 		if (advance)
 		{
@@ -82,7 +85,7 @@ namespace MoriNoHoro
 			glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 0, _particleStateBuffer);
 			glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 1, _particleStateProxyBuffer);
 
-			glDispatchCompute(32, 32, 32);
+			glDispatchCompute(vMapSize.x / 8, vMapSize.y / 8, vMapSize.z / 8);
 			//glMemoryBarrier(GL_ALL_BARRIER_BITS);
 
 			glCopyBufferSubData(GL_ARRAY_BUFFER, GL_COPY_WRITE_BUFFER, 0, 0, _nSizeOfParticles);
@@ -99,7 +102,7 @@ namespace MoriNoHoro
 		_coreShader->unuse();
 	}
 
-	void terrain::setUniforms(float *fTotalElapsedTime, glm::mat4 *mModel, glm::mat4 *mView, glm::mat4 *mProjection, int *nMapSize)
+	void terrain::setUniforms(float *fTotalElapsedTime, glm::mat4 *mModel, glm::mat4 *mView, glm::mat4 *mProjection, glm::vec3 *vMapSize)
 	{
 		_coreShader->use();
 
@@ -110,12 +113,12 @@ namespace MoriNoHoro
 			_coreShader->setUniformMatrix4fv("view_matrix", *mView);
 		if (mProjection != nullptr)
 			_coreShader->setUniformMatrix4fv("projection_matrix", *mProjection);
-		if (nMapSize != 0)
-			_coreShader->setUniform1i("mapSize", *nMapSize);
+		if (vMapSize != nullptr)
+			_coreShader->setUniform3fv("mapSize", *vMapSize);
 
 		_computeShader->use();
-		if (nMapSize != 0)
-			_computeShader->setUniform1i("mapSize", *nMapSize);
+		if (vMapSize != nullptr)
+			_computeShader->setUniform3fv("mapSize", *vMapSize);
 	}
 
 #pragma endregion

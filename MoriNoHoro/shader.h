@@ -75,6 +75,14 @@ public:
 			std::cout << "\nuniform loc " << uniformLoc;
 	}
 
+	void setUniform3fv(const GLchar *cName, glm::vec3 vValue)
+	{
+		GLuint uniformLoc = glGetUniformLocation(this->_programID, cName);
+		glUniform3fv(uniformLoc, 1, glm::value_ptr(vValue));
+		if (coutLocations)
+			std::cout << "\nuniform loc " << uniformLoc;
+	}
+
 	void setUniform1f(const GLchar *cName, GLfloat fValue)
 	{
 		GLuint uniformLoc = glGetUniformLocation(this->_programID, cName);

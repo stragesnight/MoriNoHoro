@@ -120,9 +120,9 @@ public:
 		std::vector<float> vOutput;
 		//vOutput.reserve(vMapSize.x * vMapSize.y * vMapSize.z);
 
-		for (int x = 0; x < vMapSize.x; x++)
+		for (int y = 0; y < vMapSize.y; y++)
 		{
-			for (int y = 0; y < vMapSize.y; y++)
+			for (int x = 0; x < vMapSize.x; x++)
 			{
 				for (int z = 0; z < vMapSize.z; z++)
 				{
