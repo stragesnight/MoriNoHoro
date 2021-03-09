@@ -12,8 +12,7 @@ namespace MoriNoHoro
 	}
 	terrain::~terrain()
 	{
-		_vParticleStates.clear();
-		_vParticleStatesProxy.clear();
+		_vChunks.clear();
 
 		delete _coreShader;
 		delete _computeShader;
@@ -24,84 +23,52 @@ namespace MoriNoHoro
 #pragma endregion
 
 #pragma region PUBLIC_METHODS
-	void terrain::construct(glm::vec3 vMapSize, glm::vec3 vMapOffset)
+	void terrain::construct(int nChunks, glm::vec3 vMapSize, glm::vec3 vMapOffset)
 	{
-		_vParticleStates.clear();
-		_vParticleStatesProxy.clear();
+		_nChunks = nChunks;
+		_vMapSize = vMapSize;
 
-		std::vector<float> noiseMap3D;
+		_vChunks.clear();
 
-		noiseMap3D = perlin.noiseMap3D(vMapSize, 5, 512.f, 0.25f, 4.f, { 0.f, 0.f, 0.f });
-
-		for (int y = 0; y < vMapSize.y; y++)
+		for (int z = 0; z < nChunks; z++)
 		{
-			for (int z = 0; z < vMapSize.z; z++)
+			for (int x = 0; x < nChunks; x++)
 			{
-				for (int x = 0; x < vMapSize.x; x++)
-				{
-					int index = (y * vMapSize.x * vMapSize.z) + (z * vMapSize.x) + x;
-
-					float noiseValue = noiseMap3D[index];
-					noiseValue = (1 - (y / (float)vMapSize.y)) * 0.25f + (noiseValue * 0.75f);
-
-					unsigned state = noiseValue > 0.475f ? 1 : 0;
-
-					_vParticleStates.push_back(state);
-					_vParticleStatesProxy.push_back(state);
-				}
+				chunk c = chunk();
+				c.construct(perlin, _coreShader, vMapSize, vMapOffset + glm::vec3(z * vMapSize.x, 0.f, x * vMapSize.z));
+				_vChunks.push_back(c);
 			}
 		}
-
-		noiseMap3D.clear();
-
-		_nSizeOfParticles = _vParticleStates.size() * sizeof(unsigned);
-		nParticles = _vParticleStates.size();
-		
-		// state buffer
-		glCreateBuffers(1, &_particleStateBuffer);
-		glBindBuffer(GL_ARRAY_BUFFER, _particleStateBuffer);
-
-		_coreShader->setVertexAttribPointer("cellState", 1, GL_UNSIGNED_INT, GL_FALSE, sizeof(unsigned), 0);
-
-		glBufferData(GL_ARRAY_BUFFER, _nSizeOfParticles, _vParticleStates.data(), GL_DYNAMIC_COPY);
-
-		_vParticleStates.clear();
-
-		// proxy buffer
-		glCreateBuffers(1, &_particleStateProxyBuffer);
-		glBindBuffer(GL_COPY_WRITE_BUFFER, _particleStateProxyBuffer);
-
-		glBufferData(GL_COPY_WRITE_BUFFER, _nSizeOfParticles, _vParticleStatesProxy.data(), GL_DYNAMIC_COPY);
-
-		_vParticleStatesProxy.clear();
 	}
 
-	void terrain::draw(bool advance, glm::vec3 vMapSize)
+	void terrain::draw(bool advance)
 	{
 		if (advance)
 		{
 			_computeShader->use();
 
-			glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 0, _particleStateBuffer);
-			glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 1, _particleStateProxyBuffer);
-
-			glDispatchCompute(vMapSize.x / 8, vMapSize.y / 8, vMapSize.z / 8);
-			//glMemoryBarrier(GL_ALL_BARRIER_BITS);
-
-			glCopyBufferSubData(GL_ARRAY_BUFFER, GL_COPY_WRITE_BUFFER, 0, 0, _nSizeOfParticles);
+			for (auto &chunk : _vChunks)
+				chunk.compute(_vMapSize);
 
 			_computeShader->unuse();
 		}
 
 		_coreShader->use();
 
-		glBindBuffer(GL_ARRAY_BUFFER, _particleStateBuffer);
-		_coreShader->setVertexAttribPointer("cellState", 1, GL_UNSIGNED_INT, GL_FALSE, sizeof(unsigned), 0);
-		glDrawArrays(GL_POINTS, 0, nParticles);
+		for (int z = 0; z < _nChunks; z++)
+		{
+			for (int x = 0; x < _nChunks; x++)
+			{
+				_vChunks[z * _nChunks + x].draw(_coreShader, { x * _vMapSize.x, 0.f, z * _vMapSize.z });
+			}
+		}
 
 		_coreShader->unuse();
 	}
 
+#pragma endregion
+
+#pragma region PRIVATE_METHODS
 	void terrain::setUniforms(float *fTotalElapsedTime, glm::mat4 *mModel, glm::mat4 *mView, glm::mat4 *mProjection, glm::vec3 *vMapSize)
 	{
 		_coreShader->use();
@@ -119,27 +86,6 @@ namespace MoriNoHoro
 		_computeShader->use();
 		if (vMapSize != nullptr)
 			_computeShader->setUniform3fv("mapSize", *vMapSize);
-	}
-
-#pragma endregion
-
-#pragma region PRIVATE_METHODS
-	void terrain::bufferData()
-	{
-		// send data to buffer
-		// draw modes:
-		//		GL_STREAM_DRAW: the data is set only once and used by the GPU at most a few times.
-		//		GL_STATIC_DRAW: the data is set only once and used many times.
-		//		GL_DYNAMIC_DRAW: the data is changed a lot and used many times.
-		glBufferData(GL_ARRAY_BUFFER, _nSizeOfParticles, _vParticleStates.data(), GL_DYNAMIC_COPY);
-		//_vParticles.clear();
-		std::cout << "\nBUFFERED " << _vParticleStates.size() << " PARTICLES\n";
-	}
-
-	void terrain::bufferSubData()
-	{
-		glBufferSubData(GL_ARRAY_BUFFER, 0, _nSizeOfParticles, _vParticleStates.data());
-		std::cout << "\nSUB-BUFFERED " << _vParticleStates.size() << " PARTICLES\n";
 	}
 
 #pragma endregion

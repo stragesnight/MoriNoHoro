@@ -41,8 +41,8 @@ namespace MoriNoHoro
 		static const int WINDOW_HEIGHT = 1080;
 		float ASPECT_RATIO;
 		// seems like 256x256x256 / 512x64x512 are optimal sizes, bigger numbers will overflow buffer
-		glm::vec3 MAP_SIZE = { 256, 256, 256 };
-		static const int NUM_CHUNKS = 1;
+		glm::vec3 CHUNK_SIZE = { 128, 128, 128 };
+		static const int NUM_CHUNKS = 4;
 
 		const glm::vec3 CAMERA_UP { 0.0f, 1.0f, 0.0f };
 		const float SPEED = 2.5f;
