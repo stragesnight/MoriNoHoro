@@ -23,22 +23,24 @@ namespace MoriNoHoro
 #pragma endregion
 
 #pragma region PUBLIC_METHODS
-	void terrain::construct(int nChunks, glm::vec3 vMapSize, glm::vec3 vMapOffset)
+	void terrain::construct()
 	{
-		_nChunks = nChunks;
-		_vMapSize = vMapSize;
-
 		_vChunks.clear();
+		_vChunkEdges.clear();
 
-		for (int z = 0; z < nChunks; z++)
+		for (int z = 0; z < _nChunks; z++)
 		{
-			for (int x = 0; x < nChunks; x++)
+			for (int x = 0; x < _nChunks; x++)
 			{
 				chunk c = chunk();
-				c.construct(perlin, _coreShader, vMapSize, vMapOffset + glm::vec3(z * vMapSize.x, 0.f, x * vMapSize.z));
+				c.construct(perlin, _coreShader, _vMapSize, _vMapOffset + glm::vec3(z * _vMapSize.x, 0.f, x * _vMapSize.z), &_vChunkEdges);
 				_vChunks.push_back(c);
 			}
 		}
+
+		glCreateBuffers(1, &_chunkEdgeBuffer);
+		glBindBuffer(GL_COPY_READ_BUFFER, _chunkEdgeBuffer);
+		glBufferData(GL_COPY_READ_BUFFER, _vChunkEdges.size() * sizeof(unsigned), _vChunkEdges.data(), GL_DYNAMIC_COPY);
 	}
 
 	void terrain::draw(bool advance)
@@ -47,8 +49,13 @@ namespace MoriNoHoro
 		{
 			_computeShader->use();
 
-			for (auto &chunk : _vChunks)
-				chunk.compute(_vMapSize);
+			glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 2, _chunkEdgeBuffer);
+
+			for (int i = 0; i < _vChunks.size(); i++)
+			{
+				_computeShader->setUniform1ui("chunkIndex", i);
+				_vChunks[i].compute(_vMapSize);
+			}
 
 			_computeShader->unuse();
 		}
@@ -69,7 +76,7 @@ namespace MoriNoHoro
 #pragma endregion
 
 #pragma region PRIVATE_METHODS
-	void terrain::setUniforms(float *fTotalElapsedTime, glm::mat4 *mModel, glm::mat4 *mView, glm::mat4 *mProjection, glm::vec3 *vMapSize)
+	void terrain::setUniforms(float *fTotalElapsedTime, glm::mat4 *mModel, glm::mat4 *mView, glm::mat4 *mProjection, bool setMapSize)
 	{
 		_coreShader->use();
 
@@ -80,12 +87,16 @@ namespace MoriNoHoro
 			_coreShader->setUniformMatrix4fv("view_matrix", *mView);
 		if (mProjection != nullptr)
 			_coreShader->setUniformMatrix4fv("projection_matrix", *mProjection);
-		if (vMapSize != nullptr)
-			_coreShader->setUniform3fv("mapSize", *vMapSize);
+		if (setMapSize)
+			_coreShader->setUniform3fv("mapSize", _vMapSize);
 
 		_computeShader->use();
-		if (vMapSize != nullptr)
-			_computeShader->setUniform3fv("mapSize", *vMapSize);
+		if (setMapSize)
+		{
+			_computeShader->setUniform3fv("mapSize", _vMapSize);
+			_computeShader->setUniform1ui("nChunks", _nChunks);
+		}
+
 	}
 
 #pragma endregion

@@ -99,6 +99,14 @@ public:
 			std::cout << "\nuniform loc " << uniformLoc;
 	}
 
+	void setUniform1ui(const GLchar *cName, GLuint nValue)
+	{
+		GLuint uniformLoc = glGetUniformLocation(this->_programID, cName);
+		glUniform1ui(uniformLoc, nValue);
+		if (coutLocations)
+			std::cout << "\nuniform loc " << uniformLoc;
+	}
+
 	void setVertexAttribPointer(const GLchar *cName, GLint nCount, GLenum eType, GLboolean _b, GLsizei size, GLvoid *offset)
 	{
 		GLuint attribLoc = glGetAttribLocation(this->_programID, cName);

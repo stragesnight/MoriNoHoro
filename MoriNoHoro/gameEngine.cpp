@@ -29,7 +29,7 @@ namespace MoriNoHoro
 		glCreateVertexArrays(1, &_vao);
 		glBindVertexArray(_vao);
 
-		map->construct(NUM_CHUNKS, CHUNK_SIZE, vMapOffset);
+		map->construct();
 
 		// unbind vertex array
 		glBindVertexArray(0);
@@ -134,7 +134,7 @@ namespace MoriNoHoro
 
 		// send data to gpu
 
-		map->setUniforms(&_fTotalElapsedTime, &_mModelMatrix, &_mViewMatrix, &_mProjectionMatrix, &CHUNK_SIZE);
+		map->setUniforms(&_fTotalElapsedTime, &_mModelMatrix, &_mViewMatrix, &_mProjectionMatrix, true);
 
 		glUseProgram(0);
 	}

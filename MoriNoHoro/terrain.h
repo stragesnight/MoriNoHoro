@@ -38,7 +38,7 @@ namespace MoriNoHoro
 
 #pragma region PUBLIC_METHODS
 	public:
-		void construct(perlinNoise perlin, shader *coreShader, glm::vec3 vMapSize, glm::vec3 vMapOffset)
+		void construct(perlinNoise perlin, shader *coreShader, glm::vec3 vMapSize, glm::vec3 vMapOffset, std::vector<unsigned> *edgeBuffer)
 		{
 			_vParticleStates.clear();
 			_vParticleStatesProxy.clear();
@@ -62,6 +62,12 @@ namespace MoriNoHoro
 
 						_vParticleStates.push_back(state);
 						_vParticleStatesProxy.push_back(state);
+
+						// push state into the edge buffer if current particle is on edge
+						if (x == 0 || x == vMapSize.x - 1 ||
+							y == 0 || y == vMapSize.y - 1 ||
+							z == 0 || z == vMapSize.z - 1)
+							edgeBuffer->push_back(state);
 					}
 				}
 			}
@@ -130,23 +136,25 @@ namespace MoriNoHoro
 
 #pragma region PRIVATE_VARIABLES
 	private:
-		glm::vec3 _vMapSize;
-		int _nChunks;
+		glm::vec3 _vMapSize { 128, 128, 128 };
+		glm::vec3 _vMapOffset{ 0.f, 0.f, 0.f };
+		int _nChunks = 4;
 
 		perlinNoise perlin;
 
 		std::vector<chunk> _vChunks;
+		std::vector<unsigned> _vChunkEdges;
 
 		shader *_coreShader = nullptr;
 		shader *_computeShader = nullptr;
 
-		GLuint _vao;
+		GLuint _chunkEdgeBuffer;
 
 #pragma endregion
 
 #pragma region PUBLIC_METHODS
 	public:
-		void construct(int nChunks, glm::vec3 vMapSize, glm::vec3 vMapOffset);
+		void construct();
 		void draw(bool advance);
 		void setUniforms
 		(
@@ -154,7 +162,7 @@ namespace MoriNoHoro
 			glm::mat4 *mModel = nullptr,
 			glm::mat4 *mView = nullptr,
 			glm::mat4 *mProjection = nullptr,
-			glm::vec3 *vMapSize = nullptr
+			bool setMapSize = false
 		);
 
 #pragma endregion
