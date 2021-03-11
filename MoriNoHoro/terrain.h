@@ -67,7 +67,7 @@ namespace MoriNoHoro
 						if (x == 0 || x == vMapSize.x - 1 ||
 							y == 0 || y == vMapSize.y - 1 ||
 							z == 0 || z == vMapSize.z - 1)
-							edgeBuffer->push_back(state);
+							edgeBuffer->push_back(0);
 					}
 				}
 			}

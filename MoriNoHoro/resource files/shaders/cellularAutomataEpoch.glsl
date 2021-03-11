@@ -22,7 +22,7 @@ void main()
 	
 	uvec3 umapSize = uvec3(mapSize);
 
-	uint index = (gl_GlobalInvocationID.y * umapSize.x * umapSize.z) + (gl_GlobalInvocationID.z* umapSize.x) + gl_GlobalInvocationID.x;
+	uint index = (gl_GlobalInvocationID.y * umapSize.x * umapSize.z) + (gl_GlobalInvocationID.z * umapSize.x) + gl_GlobalInvocationID.x;
 	
 	uint mapSizeSquared = umapSize.x * umapSize.z;
 	uint index2D = index % mapSizeSquared;
@@ -49,7 +49,7 @@ void main()
 		if (fEquals(proxy[f], 1))
 			nNeighbors++;	
 	}
-	else if (fEquals(edge[cF + (mapSizeSquared * 0) + (f % mapSizeSquared)], 1))
+	else if (fEquals(edge[cF + (f % mapSizeSquared)], 1))
 		nNeighbors++;
 
 
@@ -59,7 +59,7 @@ void main()
 		if (fEquals(proxy[b], 1))
 			nNeighbors++;	
 	}
-	else if (fEquals(edge[cB + (mapSizeSquared * 1) + (b % mapSizeSquared)], 1))
+	else if (fEquals(edge[cB + mapSizeSquared + (b % mapSizeSquared)], 1))
 		nNeighbors++;
 
 	// right
@@ -111,7 +111,7 @@ void main()
 		if (fEquals(proxy[fl], 1))
 			nNeighbors++;	
 	}
-	else if (fEquals(edge[cF + (mapSizeSquared * 0) + (f % mapSizeSquared - umapSize.x)], 1))
+	else if (fEquals(edge[cF + (fl % mapSizeSquared)], 1))
 		nNeighbors++;
 
 	// front right
@@ -120,7 +120,7 @@ void main()
 		if (fEquals(proxy[fr], 1))
 			nNeighbors++;	
 	}
-	else if (fEquals(edge[cF + (mapSizeSquared * 0) + (f % mapSizeSquared + umapSize.x)], 1))
+	else if (fEquals(edge[cF + (fr % mapSizeSquared)], 1))
 		nNeighbors++;
 
 	// back left
@@ -129,7 +129,7 @@ void main()
 		if (fEquals(proxy[bl], 1))
 			nNeighbors++;	
 	}
-	else if (fEquals(edge[cB + (mapSizeSquared * 1) + (b % mapSizeSquared - umapSize.x)], 1))
+	else if (fEquals(edge[cB + mapSizeSquared + (bl % mapSizeSquared)], 1))
 		nNeighbors++;
 
 	// back right
@@ -138,7 +138,7 @@ void main()
 		if (fEquals(proxy[br], 1))
 			nNeighbors++;	
 	}
-	else if (fEquals(edge[cB + (mapSizeSquared * 1) + (b % mapSizeSquared + umapSize.x)], 1))
+	else if (fEquals(edge[cB + mapSizeSquared + (br % mapSizeSquared)], 1))
 		nNeighbors++;
 
 	// up left
